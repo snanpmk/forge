@@ -13,12 +13,14 @@ const Prayer = require('../models/Prayer');
 
 // GET user stats (Gamification)
 router.get('/', verifyToken, async (req, res) => {
-  try {
-    const user = await User.findById(req.query.userId || req.user.id);
-    res.json(user);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+    try {
+        // Use token ID instead of query ID for profile to prevent spoofing/stale data
+        const user = await User.findById(req.user.id).select('-password');
+        res.json(user);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ msg: 'Server Error' });
+    }
 });
 
 // DELETE /api/user/reset - Wipe all user data
@@ -47,6 +49,25 @@ router.delete('/reset', verifyToken, async (req, res) => {
     } catch (err) {
         console.error("Reset Error:", err);
         res.status(500).json({ message: 'Failed to wipe data.' });
+    }
+});
+
+
+// Update User Settings (Finance Categories)
+router.put('/settings', verifyToken, async (req, res) => {
+    try {
+        const { finance_settings } = req.body;
+        const user = await User.findById(req.user.id);
+        
+        if (finance_settings) {
+            user.finance_settings = finance_settings;
+        }
+        
+        await user.save();
+        res.json(user);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
     }
 });
 

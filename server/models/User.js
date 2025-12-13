@@ -31,7 +31,19 @@ const UserSchema = new mongoose.Schema({
   },
   badges: [{
     type: String
-  }]
+  }],
+  finance_settings: {
+      categories: {
+          income: { 
+              type: [String], 
+              default: ["Salary", "Freelance", "Business Profit", "Investments", "Dividends", "Rental Income", "Refunds", "Grants/Awards", "Gifts", "Allowance", "Bonus", "Side Hustle", "Pension", "Other"] 
+          },
+          expense: { 
+              type: [String], 
+              default: ["Rent/Mortgage", "Maintenance", "Electricity", "Water", "Internet/WiFi", "Phone Bill", "Gas", "Groceries", "Dining Out", "Coffee/Snacks", "Alcohol", "Fuel", "Public Transport", "Taxi/Uber", "Car Maintenance", "Parking", "Vehicle Insurance", "Health Insurance", "Doctor/Medical", "Pharmacy", "Gym/Fitness", "Personal Care", "Hair/Beauty", "Clothing", "Electronics", "Home Decor", "Subscriptions", "Hobbies", "Entertainment", "Tuition", "Books/Courses", "Stationery", "Software", "Loan Repayment", "Credit Card Bill", "Tax", "Insurance", "Fees/Charges", "Gifts", "Donations", "Family Support", "Pet Care", "Childcare", "Travel", "Emergency", "Other"] 
+          }
+      }
+  }
 }, { timestamps: true });
 
 // Ensure only one user exists for this local app

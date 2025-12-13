@@ -18,38 +18,37 @@ const TRANSACTION_TYPES = [
   { id: 'borrowed', label: 'Borrowed', icon: HandCoins },
 ];
 
-const INCOME_CATEGORIES = [
+
+// Default Fallbacks
+const DEFAULT_INCOME_CATEGORIES = [
   "Salary", "Freelance", "Business Profit", "Investments", "Dividends", 
   "Rental Income", "Refunds", "Grants/Awards", "Gifts", "Allowance", 
   "Bonus", "Side Hustle", "Pension", "Other"
 ];
 
-const EXPENSE_CATEGORIES = [
-  // Housing & Utilities
+const DEFAULT_EXPENSE_CATEGORIES = [
   "Rent/Mortgage", "Maintenance", "Electricity", "Water", "Internet/WiFi", "Phone Bill", "Gas",
-  // Food & Daily
   "Groceries", "Dining Out", "Coffee/Snacks", "Alcohol",
-  // Transportation
   "Fuel", "Public Transport", "Taxi/Uber", "Car Maintenance", "Parking", "Vehicle Insurance",
-  // Personal & Health
   "Health Insurance", "Doctor/Medical", "Pharmacy", "Gym/Fitness", "Personal Care", "Hair/Beauty",
-  // Shopping & Lifestyle
   "Clothing", "Electronics", "Home Decor", "Subscriptions", "Hobbies", "Entertainment",
-  // Education & Work
   "Tuition", "Books/Courses", "Stationery", "Software",
-  // Financial
   "Loan Repayment", "Credit Card Bill", "Tax", "Insurance", "Fees/Charges",
-  // Social & Family
   "Gifts", "Donations", "Family Support", "Pet Care", "Childcare",
-  // Other
   "Travel", "Emergency", "Other"
 ];
 
+import { useAuth } from '../context/AuthContext';
+
 export default function Finance() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('transactions'); // 'transactions' | 'budget' | 'analytics'
   const [filterType, setFilterType] = useState('all');
   
+  const INCOME_CATEGORIES = user?.finance_settings?.categories?.income || DEFAULT_INCOME_CATEGORIES;
+  const EXPENSE_CATEGORIES = user?.finance_settings?.categories?.expense || DEFAULT_EXPENSE_CATEGORIES;
+
   // Transaction Form State
   const [formData, setFormData] = useState({
     type: 'expense',

@@ -14,6 +14,7 @@ import PrayerTracker from './pages/PrayerTracker';
 import Login from './pages/Login';
 import AppPrivacy from './pages/AppPrivacy';
 import AppTerms from './pages/AppTerms';
+import Settings from './pages/Settings';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 const queryClient = new QueryClient();
@@ -48,6 +49,7 @@ export default function App() {
                     <Route path="goals" element={<GoalPlanner />} />
                     <Route path="dump" element={<BrainDump />} />
                     <Route path="finance" element={<Finance />} />
+                    <Route path="settings" element={<Settings />} />
                     <Route path="prayer" element={<PrayerTracker />} />
                     <Route path="privacy" element={<AppPrivacy />} />
                     <Route path="terms" element={<AppTerms />} />

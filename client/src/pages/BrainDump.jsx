@@ -222,21 +222,21 @@ export default function BrainDump() {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Convert To</label>
-            <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
+            <div className="grid grid-cols-3 gap-1 bg-gray-100 p-1 rounded-lg">
               <button 
-                className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-colors ${convertType === 'task' ? 'bg-white shadow text-black' : 'text-gray-500'}`}
+                className={`py-1.5 rounded-md text-sm font-medium transition-colors ${convertType === 'task' ? 'bg-white shadow text-black' : 'text-gray-500'}`}
                 onClick={() => setConvertType('task')}
               >
                 Task
               </button>
               <button 
-                className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-colors ${convertType === 'habit' ? 'bg-white shadow text-black' : 'text-gray-500'}`}
+                className={`py-1.5 rounded-md text-sm font-medium transition-colors ${convertType === 'habit' ? 'bg-white shadow text-black' : 'text-gray-500'}`}
                 onClick={() => setConvertType('habit')}
               >
                 Habit
               </button>
               <button 
-                className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-colors ${convertType === 'goal' ? 'bg-white shadow text-black' : 'text-gray-500'}`}
+                className={`py-1.5 rounded-md text-sm font-medium transition-colors ${convertType === 'goal' ? 'bg-white shadow text-black' : 'text-gray-500'}`}
                 onClick={() => setConvertType('goal')}
               >
                 Goal
@@ -269,7 +269,7 @@ export default function BrainDump() {
               </div>
 
               {convertType === 'task' && (
-                  <div className="grid grid-cols-2 gap-4 animate-fade-in">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
                         <input 
@@ -294,9 +294,9 @@ export default function BrainDump() {
                   </div>
               )}
 
-              <div className="pt-4 flex gap-2">
-                <Button variant="ghost" className="flex-1" onClick={() => setConvertItem(null)}>Cancel</Button>
-                <Button className="flex-1" onClick={() => convertMutation.mutate()}>Convert & Archive</Button>
+              <div className="pt-4 flex justify-end gap-2">
+                <Button variant="ghost" onClick={() => setConvertItem(null)}>Cancel</Button>
+                <Button onClick={() => convertMutation.mutate()}>Convert & Archive</Button>
               </div>
             </>
           )}

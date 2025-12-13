@@ -15,18 +15,23 @@ router.post('/google', async (req, res) => {
         audience: process.env.GOOGLE_CLIENT_ID,
     });
     const { name, email, picture, sub: googleId } = ticket.getPayload();
+    // console.log('Google Payload:', { name, email, googleId }); // Debug log
+
+    if (!email) {
+        return res.status(400).json({ message: 'Email address is required from Google' });
+    }
 
     let user = await User.findOne({ email });
 
     if (!user) {
       user = await User.create({
-        username: name,
+        username: name || 'User',
         email,
         googleId,
         avatar: picture
       });
     } else if (!user.googleId) {
-        // Link existing account if needed (though here we just update)
+        // Link existing account
         user.googleId = googleId;
         user.avatar = picture;
         await user.save();
@@ -41,7 +46,8 @@ router.post('/google', async (req, res) => {
     res.json({ token: authToken, user });
   } catch (err) {
     console.error('Google Auth Error:', err);
-    res.status(401).json({ message: 'Authentication failed' });
+    console.error('Stack:', err.stack);
+    res.status(500).json({ message: 'Authentication failed', error: err.message });
   }
 });
 

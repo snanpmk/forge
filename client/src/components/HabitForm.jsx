@@ -61,14 +61,14 @@ export default function HabitForm({ initialValues, onSubmit, submitLabel = 'Crea
             
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Frequency</label>
-                <div className="flex bg-gray-100 p-1 rounded-lg">
+                <div className="grid grid-cols-3 gap-1 bg-gray-100 p-1 rounded-lg">
                     {['daily', 'weekly', 'monthly'].map(freq => (
                         <button
                             key={freq}
                             type="button"
                             onClick={() => setHabitData({ ...habitData, frequency: freq })}
                             className={clsx(
-                                "flex-1 py-1.5 px-3 rounded-md text-sm font-medium capitalize transition-all",
+                                "py-1.5 px-3 rounded-md text-sm font-medium capitalize transition-all",
                                 habitData.frequency === freq ? "bg-white shadow-sm text-black" : "text-gray-500 hover:text-gray-700"
                             )}
                         >
@@ -81,7 +81,7 @@ export default function HabitForm({ initialValues, onSubmit, submitLabel = 'Crea
             {habitData.frequency === 'weekly' && (
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Select Days</label>
-                    <div className="flex justify-between gap-1">
+                    <div className="grid grid-cols-7 gap-1">
                         {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => {
                             const isSelected = habitData.schedule.daysOfWeek?.includes(index);
                             return (
@@ -90,7 +90,7 @@ export default function HabitForm({ initialValues, onSubmit, submitLabel = 'Crea
                                     type="button"
                                     onClick={() => toggleDayOfWeek(index)}
                                     className={clsx(
-                                        "w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all",
+                                        "w-full aspect-square rounded-full flex items-center justify-center text-sm font-bold transition-all",
                                         isSelected 
                                             ? "bg-black text-white shadow-md scale-105" 
                                             : "bg-gray-100 text-gray-400 hover:bg-gray-200"

@@ -126,7 +126,7 @@ export default function GoalForm({ initialValues, onSubmit, submitLabel = 'Creat
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <select 
                     value={goalData.category}
                     onChange={(e) => setGoalData({ ...goalData, category: e.target.value })}
@@ -177,8 +177,10 @@ export default function GoalForm({ initialValues, onSubmit, submitLabel = 'Creat
                         />
                    )}
                 </div>
-                
-                <button type="submit" className="btn-primary w-full flex items-center justify-center gap-2">
+            </div>
+
+            <div className="flex justify-end pt-2">
+                <button type="submit" className="btn-primary flex items-center justify-center gap-2 px-8 py-2.5">
                     <Plus size={18} /> {submitLabel}
                 </button>
             </div>
