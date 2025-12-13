@@ -7,8 +7,8 @@ router.use(auth);
 // GET all tasks (with optional filters)
 router.get('/', async (req, res) => {
   try {
-    const { status, startDate, endDate, goal_id } = req.query;
-    let query = { user: req.user.id };
+    const { status, startDate, endDate, goal_id, userId } = req.query;
+    let query = { user: userId || req.user.id };
 
     if (status) query.status = status;
     if (goal_id) query.goal_link_id = goal_id;

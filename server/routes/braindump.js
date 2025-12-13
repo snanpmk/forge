@@ -7,7 +7,7 @@ router.use(auth);
 // GET all items
 router.get('/', async (req, res) => {
   try {
-    const items = await BrainDump.find({ user: req.user.id, processed: false }).sort({ created_at: -1 });
+    const items = await BrainDump.find({ user: req.query.userId || req.user.id, processed: false }).sort({ created_at: -1 });
     res.json(items);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -17,7 +17,7 @@ router.get('/', async (req, res) => {
 // POST new item
 router.post('/', async (req, res) => {
   try {
-    const item = new BrainDump({ ...req.body, user: req.user.id });
+    const item = new BrainDump({ ...req.body, user: req.query.userId || req.user.id });
     const savedItem = await item.save();
     res.json(savedItem);
   } catch (err) {
@@ -29,7 +29,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const item = await BrainDump.findOneAndUpdate(
-        { _id: req.params.id, user: req.user.id },
+        { _id: req.params.id, user: req.query.userId || req.user.id },
         req.body,
         { new: true }
     );
@@ -42,7 +42,7 @@ router.put('/:id', async (req, res) => {
 // DELETE item
 router.delete('/:id', async (req, res) => {
   try {
-    await BrainDump.findOneAndDelete({ _id: req.params.id, user: req.user.id });
+    await BrainDump.findOneAndDelete({ _id: req.params.id, user: req.query.userId || req.user.id });
     res.json({ message: 'Item deleted' });
   } catch (err) {
     res.status(500).json({ message: err.message });

@@ -26,12 +26,15 @@ router.get('/dashboard', async (req, res) => {
         startDate = startOfDay(subDays(new Date(), days - 1));
     }
 
+    // Use target user ID from query if provided, else default to authenticated user
+    const targetUserId = req.query.userId || req.user.id;
+
     // Execute queries in parallel
     const [habits, prayers, tasks, finances] = await Promise.all([
-        Habit.find({ user: req.user.id }),
-        Prayer.find({ user: req.user.id, date: { $gte: startDate } }),
-        Task.find({ user: req.user.id, completed: true, updatedAt: { $gte: startDate } }), // Assuming updatedAt is completion time roughly
-        Finance.find({ user: req.user.id, date: { $gte: startDate } })
+        Habit.find({ user: targetUserId }),
+        Prayer.find({ user: targetUserId, date: { $gte: startDate } }),
+        Task.find({ user: targetUserId, completed: true, updatedAt: { $gte: startDate } }), // Assuming updatedAt is completion time roughly
+        Finance.find({ user: targetUserId, date: { $gte: startDate } })
     ]);
 
     const totalHabits = habits.length;

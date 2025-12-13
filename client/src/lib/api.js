@@ -9,6 +9,13 @@ api.interceptors.request.use((config) => {
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Auto-inject userId into query params for ALL requests
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+        config.params = { ...config.params, userId };
+    }
+    
     return config;
 });
 

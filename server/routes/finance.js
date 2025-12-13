@@ -7,7 +7,7 @@ router.use(auth);
 // GET recent transactions
 router.get('/', async (req, res) => {
   try {
-    const transactions = await Finance.find({ user: req.user.id }).sort({ date: -1 }).limit(50);
+    const transactions = await Finance.find({ user: req.query.userId || req.user.id }).sort({ date: -1 }).limit(50);
     res.json(transactions);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -17,7 +17,7 @@ router.get('/', async (req, res) => {
 // POST new transaction
 router.post('/', async (req, res) => {
   try {
-    const transaction = new Finance({ ...req.body, user: req.user.id });
+    const transaction = new Finance({ ...req.body, user: req.query.userId || req.user.id });
     const savedTransaction = await transaction.save();
     res.json(savedTransaction);
   } catch (err) {
@@ -28,7 +28,7 @@ router.post('/', async (req, res) => {
 // DELETE transaction
 router.delete('/:id', async (req, res) => {
   try {
-    await Finance.findOneAndDelete({ _id: req.params.id, user: req.user.id });
+    await Finance.findOneAndDelete({ _id: req.params.id, user: req.query.userId || req.user.id });
     res.json({ message: 'Transaction deleted' });
   } catch (err) {
     res.status(500).json({ message: err.message });

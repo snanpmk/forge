@@ -42,17 +42,7 @@ export default function TaskForm({ initialValues, onSubmit, submitLabel = 'Creat
                     onChange={e => setTaskData({ ...taskData, due_date: e.target.value })}
                 />
                 </div>
-                <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Estimated Cost (₹)</label>
-                <input
-                    type="number"
-                    min="0"
-                    placeholder="0.00"
-                    className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black/5"
-                    value={taskData.estimated_cost || ''}
-                    onChange={e => setTaskData({ ...taskData, estimated_cost: Number(e.target.value) })}
-                />
-                </div>
+
                 <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
                 <select

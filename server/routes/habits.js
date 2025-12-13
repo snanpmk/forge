@@ -7,7 +7,8 @@ router.use(auth);
 // GET all habits
 router.get('/', async (req, res) => {
   try {
-    const habits = await Habit.find({ user: req.user.id }).sort({ created_at: -1 });
+    const userId = req.query.userId || req.user.id;
+    const habits = await Habit.find({ user: userId }).sort({ created_at: -1 });
     res.json(habits);
   } catch (err) {
     res.status(500).json({ message: err.message });

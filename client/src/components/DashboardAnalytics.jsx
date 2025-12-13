@@ -7,12 +7,19 @@ import api from '../lib/api';
 import clsx from 'clsx';
 import { TrendingUp, Activity, Zap } from 'lucide-react';
 
+import { useAuth } from '../context/AuthContext';
+
 export default function DashboardAnalytics() {
   const [days, setDays] = useState(7); // 7, 30, 365
+  const { user } = useAuth();
+  const userId = localStorage.getItem('userId') || user?._id;
 
   const { data: trends, isLoading } = useQuery({
-    queryKey: ['analytics-dashboard', days],
-    queryFn: async () => (await api.get(`/analytics/dashboard?days=${days}`)).data,
+    queryKey: ['analytics-dashboard', days, userId],
+    queryFn: async () => {
+        return (await api.get(`/analytics/dashboard?days=${days}`)).data;
+    },
+    enabled: !!userId
   });
 
   if (isLoading) return <div className="h-48 flex items-center justify-center text-gray-400">Loading insights...</div>;

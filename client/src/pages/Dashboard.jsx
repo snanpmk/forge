@@ -81,7 +81,7 @@ export default function Dashboard() {
                        <div className="flex flex-col">
                         <span className="text-xs font-bold uppercase tracking-wider text-muted mb-1">Prayers</span>
                         <span className="text-3xl font-display font-bold text-gray-800">
-                             {prayers.filter(p => p.status === 'on-time').length}<span className="text-lg text-gray-400 font-medium">/5</span>
+                             {new Set(prayers.filter(p => p.status === 'on-time').map(p => p.name)).size}<span className="text-lg text-gray-400 font-medium">/5</span>
                         </span>
                       </div>
                       <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><Zap size={20} /></div>

@@ -27,6 +27,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const { data } = await api.get('/user');
       setUser(data);
+      if (data._id) {
+          localStorage.setItem('userId', data._id);
+      }
     } catch (err) {
       console.error('Failed to load user', err);
       // If load fails (e.g. 401), invalid token
@@ -42,6 +45,7 @@ export const AuthProvider = ({ children }) => {
       const { token: newToken, user: userData } = res.data;
       
       localStorage.setItem('token', newToken);
+      localStorage.setItem('userId', userData._id);
       setToken(newToken);
       setUser(userData);
       return { success: true };
@@ -53,6 +57,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('userId');
     setToken(null);
     setUser(null);
   };

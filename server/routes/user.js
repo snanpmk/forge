@@ -14,7 +14,7 @@ const Prayer = require('../models/Prayer');
 // GET user stats (Gamification)
 router.get('/', verifyToken, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.query.userId || req.user.id);
     res.json(user);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -24,7 +24,7 @@ router.get('/', verifyToken, async (req, res) => {
 // DELETE /api/user/reset - Wipe all user data
 router.delete('/reset', verifyToken, async (req, res) => {
     try {
-        const userId = req.user.id;
+        const userId = req.query.userId || req.user.id;
 
         // Parallel deletions for efficiency
         await Promise.all([

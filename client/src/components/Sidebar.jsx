@@ -1,8 +1,9 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, CheckSquare, Target, Brain, DollarSign, Sun, X, Calendar, Shield, FileText } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, Target, Brain, DollarSign, Sun, X, Calendar, Shield, FileText, LogOut } from 'lucide-react';
 import clsx from 'clsx';
 import UserLevel from './UserLevel';
+import { useAuth } from '../context/AuthContext';
 
 const NavItem = ({ to, icon: Icon, label, onClick }) => (
   <NavLink
@@ -30,6 +31,7 @@ const NavItem = ({ to, icon: Icon, label, onClick }) => (
 );
 
 export default function Sidebar({ isOpen, onClose }) {
+  const { logout } = useAuth();
   
   return (
     <>
@@ -76,7 +78,22 @@ export default function Sidebar({ isOpen, onClose }) {
           <NavItem to="/terms" icon={FileText} label="Terms" onClick={onClose} />
         </div>
 
-       
+       <div className="px-2 pb-2 mt-auto">
+          <button
+            onClick={() => {
+                if(confirm('Are you sure you want to logout?')) {
+                    logout();
+                    onClose();
+                }
+            }}
+            className="flex flex-col items-center justify-center w-14 h-14 rounded-2xl transition-all duration-300 text-muted hover:text-red-500 hover:bg-red-50 hover:shadow-soft group relative"
+          >
+            <LogOut size={22} />
+             <span className="absolute left-16 ml-3 px-3 py-1.5 bg-red-500 text-white text-xs font-semibold rounded-xl opacity-0 group-hover:opacity-100 transition-all duration-200 whitespace-nowrap z-50 pointer-events-none shadow-soft border border-white/50 translate-x-[-10px] group-hover:translate-x-0">
+                Logout
+            </span>
+          </button>
+       </div>
       </nav>
     </>
   );

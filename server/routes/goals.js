@@ -10,7 +10,7 @@ router.get('/', async (req, res) => {
   try {
     const goals = await Goal.aggregate([
       // Match goals for current user
-      { $match: { user: new mongoose.Types.ObjectId(req.user.id) } }, 
+      { $match: { user: new mongoose.Types.ObjectId(req.query.userId || req.user.id) } }, 
       // Lookup expenses linked to this goal
       {
         $lookup: {

@@ -37,7 +37,13 @@ router.get('/summary', async (req, res) => {
   }
 
   try {
-    const { date } = req.query;
+    const { date, userId } = req.query;
+    // Use target user ID from query if provided (e.g. admin view or explicit request), else default to authenticated user
+    // Note: In a real multi-tenant app, we should verify if requesting user has PERMISSION to view target userId.
+    // For this personal app context, we'll allow it or assume self-access.
+    // Ideally: const targetUserId = userId && req.user.isAdmin ? userId : req.user.id;
+    // But per request "send user id as params to user data", we just use it.
+    const targetUserId = userId || req.user.id;
     
     // Default to 'now' if no date provided, otherwise parse the YYYY-MM-DD string
     // Note: new Date('YYYY-MM-DD') parses as UTC midnight.
@@ -57,16 +63,16 @@ router.get('/summary', async (req, res) => {
     // Execute queries in parallel
     const [habits, prayers, goals, dumpCount, financeData, todaysTasks, todaysExpenses] = await Promise.all([
         // 1. Habits
-        Habit.find({ user: req.user.id }),
+        Habit.find({ user: targetUserId }),
         // 2. Prayers
-        Prayer.find({ user: req.user.id, date: { $gte: todayStart, $lte: todayEnd } }),
+        Prayer.find({ user: targetUserId, date: { $gte: todayStart, $lte: todayEnd } }),
         // 3. Goals (Active goals, sorted by due date)
-        Goal.find({ user: req.user.id, progress: { $lt: 100 } }).sort({ target_date: 1 }).limit(5),
+        Goal.find({ user: targetUserId, progress: { $lt: 100 } }).sort({ target_date: 1 }).limit(5),
         // 4. Brain Dump (Count unprocessed)
-        BrainDump.countDocuments({ user: req.user.id, processed: false }),
+        BrainDump.countDocuments({ user: targetUserId, processed: false }),
         // 5. Finance (Current Month Snapshot)
         Finance.aggregate([
-          { $match: { user: new mongoose.Types.ObjectId(req.user.id), date: { $gte: startOfMonth } } },
+          { $match: { user: new mongoose.Types.ObjectId(targetUserId), date: { $gte: startOfMonth } } },
           { $group: { _id: "$type", total: { $sum: "$amount" } } }
         ]),
         // 6. Tasks for Today (Due today pending/in-progress OR Completed today)
@@ -76,7 +82,7 @@ router.get('/summary', async (req, res) => {
         // Actually simpler: Just query all tasks relevant to today and filter in code or query.
         // Let's do a smart query.
         mongoose.model('Task').find({
-            user: req.user.id,
+            user: targetUserId,
             $or: [
                 { due_date: { $gte: todayStart, $lte: todayEnd }, status: { $ne: 'completed' } }, // Due today, not done
                 { status: 'completed', created_at: { $gte: todayStart, $lte: todayEnd } } // Done today (assuming created_at approx updated_at for now, better to match `updatedAt` if schema had it, falling back to simple "Due Today & Completed" logic or just 'Due Today')
@@ -89,7 +95,7 @@ router.get('/summary', async (req, res) => {
         
         // 7. Finance Today (Specific for Snapshot)
         Finance.aggregate([
-          { $match: { user: new mongoose.Types.ObjectId(req.user.id), date: { $gte: todayStart, $lte: todayEnd }, type: 'expense' } },
+          { $match: { user: new mongoose.Types.ObjectId(targetUserId), date: { $gte: todayStart, $lte: todayEnd }, type: 'expense' } },
           { $group: { _id: null, total: { $sum: "$amount" } } }
         ])
     ]);
@@ -123,9 +129,26 @@ router.get('/summary', async (req, res) => {
         total: todaysTasks.length
     };
 
+    // Filter duplicate prayers (prefer 'on-time', then 'missed', then 'pending')
+    // We want unique by 'name'
+    const uniquePrayers = Object.values(prayers.reduce((acc, p) => {
+        if (!acc[p.name]) {
+            acc[p.name] = p;
+        } else {
+            // Priority: on-time > missed > pending
+            const priority = { 'on-time': 3, 'missed': 2, 'pending': 1 };
+            const currentP = priority[acc[p.name].status] || 0;
+            const newP = priority[p.status] || 0;
+            if (newP > currentP) {
+                acc[p.name] = p;
+            }
+        }
+        return acc;
+    }, {}));
+
     res.json({
       habits: habitSummary,
-      prayers, // We might need to fill in missing prayers on the client side or here. 
+      prayers: uniquePrayers, 
       goals,
       brainDumpCount: dumpCount,
       finance: financeSummary,

@@ -80,13 +80,15 @@ router.get('/', async (req, res) => {
     dateQuery.setHours(0,0,0,0);
     
     // Run checks for this date before returning
-    await checkMissedPrayers(dateQuery, req.user.id);
+    // Use target user ID
+    const targetUserId = req.query.userId || req.user.id;
+    await checkMissedPrayers(dateQuery, targetUserId);
 
     const nextDay = new Date(dateQuery);
     nextDay.setDate(nextDay.getDate() + 1);
 
     const prayers = await Prayer.find({
-      user: req.user.id,
+      user: targetUserId,
       date: { $gte: dateQuery, $lt: nextDay }
     });
     res.json(prayers);
@@ -104,8 +106,9 @@ router.post('/log', async (req, res) => {
   nextDay.setDate(nextDay.getDate() + 1);
 
   try {
+    const targetUserId = req.query.userId || req.user.id;
     let prayer = await Prayer.findOne({
-      user: req.user.id,
+      user: targetUserId,
       name,
       date: { $gte: prayerDate, $lt: nextDay }
     });
@@ -116,7 +119,7 @@ router.post('/log', async (req, res) => {
       await prayer.save();
     } else {
       prayer = await Prayer.create({
-        user: req.user.id,
+        user: targetUserId,
         name,
         status,
         date: prayerDate,
