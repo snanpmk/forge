@@ -38,7 +38,7 @@ const UserSchema = new mongoose.Schema({
 UserSchema.statics.getSingleUser = async function() {
   let user = await this.findOne();
   if (!user) {
-    user = await this.create({ username: 'My Journal User' });
+    user = await this.create({ username: 'Forge User' });
   }
   return user;
 };

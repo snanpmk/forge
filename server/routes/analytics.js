@@ -3,6 +3,10 @@ const Habit = require('../models/Habit');
 const Prayer = require('../models/Prayer');
 const { startOfDay, subDays, format, isSameDay, addDays } = require('date-fns');
 
+const auth = require('../middleware/auth');
+
+router.use(auth);
+
 // GET /api/analytics/dashboard
 router.get('/dashboard', async (req, res) => {
   try {
@@ -12,8 +16,8 @@ router.get('/dashboard', async (req, res) => {
 
     // Execute queries in parallel
     const [habits, prayers] = await Promise.all([
-        Habit.find(),
-        Prayer.find({ date: { $gte: startDate } })
+        Habit.find({ user: req.user.id }),
+        Prayer.find({ user: req.user.id, date: { $gte: startDate } })
     ]);
 
     const totalHabits = habits.length;

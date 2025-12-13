@@ -63,7 +63,7 @@ export default function Sidebar({ isOpen, onClose }) {
 
 
 
-        <div className="flex-1 w-full space-y-2 overflow-y-auto no-scrollbar px-2">
+        <div className="flex-1 w-full space-y-2 overflow-y-auto overflow-x-hidden no-scrollbar px-2">
           <NavItem to="/" icon={LayoutDashboard} label="Hub" onClick={onClose} />
           <NavItem to="/prayer" icon={Sun} label="Prayer" onClick={onClose} />
           <NavItem to="/tasks" icon={Calendar} label="Tasks" onClick={onClose} />
@@ -71,16 +71,12 @@ export default function Sidebar({ isOpen, onClose }) {
           <NavItem to="/goals" icon={Target} label="Goals" onClick={onClose} />
           <NavItem to="/dump" icon={Brain} label="Dump" onClick={onClose} />
           <NavItem to="/finance" icon={DollarSign} label="Finance" onClick={onClose} />
-          <NavItem to="/finance" icon={DollarSign} label="Finance" onClick={onClose} />
           <div className="border-t border-gray-200 my-2 pt-2 w-10 mx-auto"></div>
           <NavItem to="/privacy" icon={Shield} label="Privacy" onClick={onClose} />
           <NavItem to="/terms" icon={FileText} label="Terms" onClick={onClose} />
         </div>
 
-        {/* User Level Display */}
-        <div className="w-full px-2 mt-4 hidden lg:block">
-            <UserLevel />
-        </div>
+       
       </nav>
     </>
   );

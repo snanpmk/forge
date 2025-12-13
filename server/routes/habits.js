@@ -1,10 +1,13 @@
 const router = require('express').Router();
 const Habit = require('../models/Habit');
+const auth = require('../middleware/auth');
+
+router.use(auth);
 
 // GET all habits
 router.get('/', async (req, res) => {
   try {
-    const habits = await Habit.find().sort({ created_at: -1 });
+    const habits = await Habit.find({ user: req.user.id }).sort({ created_at: -1 });
     res.json(habits);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -14,7 +17,7 @@ router.get('/', async (req, res) => {
 // POST new habit
 router.post('/', async (req, res) => {
   try {
-    const habit = new Habit(req.body);
+    const habit = new Habit({ ...req.body, user: req.user.id });
     const savedHabit = await habit.save();
     res.json(savedHabit);
   } catch (err) {
@@ -63,7 +66,7 @@ const { addXP } = require('../utils/gamification');
 // PUT update habit (e.g. log completion)
 router.put('/:id/log', async (req, res) => {
   try {
-    const habit = await Habit.findById(req.params.id);
+    const habit = await Habit.findOne({ _id: req.params.id, user: req.user.id });
     if (!habit) return res.status(404).json({ message: 'Habit not found' });
 
     // Check if log for target date exists
@@ -113,7 +116,7 @@ router.put('/:id/log', async (req, res) => {
 // DELETE habit
 router.delete('/:id', async (req, res) => {
   try {
-    await Habit.findByIdAndDelete(req.params.id);
+    await Habit.findOneAndDelete({ _id: req.params.id, user: req.user.id });
     res.json({ message: 'Habit deleted' });
   } catch (err) {
     res.status(500).json({ message: err.message });

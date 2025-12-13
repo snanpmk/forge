@@ -30,8 +30,6 @@ app.use('/api/prayers', require('./routes/prayers'));
 app.use('/api/tasks', require('./routes/tasks'));
 app.use('/api/user', require('./routes/user'));
 
-app.use('/api/user', require('./routes/user'));
-
 // Serve Static Assets in Production
 if (process.env.NODE_ENV === 'production') {
   const path = require('path');

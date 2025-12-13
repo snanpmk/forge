@@ -4,6 +4,10 @@ const Prayer = require('../models/Prayer');
 const Goal = require('../models/Goal');
 const BrainDump = require('../models/BrainDump');
 const Finance = require('../models/Finance');
+const auth = require('../middleware/auth');
+const mongoose = require('mongoose');
+
+router.use(auth);
 
 router.get('/summary', async (req, res) => {
   if (process.env.USE_MOCK_DB === 'true') {
@@ -45,16 +49,16 @@ router.get('/summary', async (req, res) => {
     // Execute queries in parallel
     const [habits, prayers, goals, dumpCount, financeData] = await Promise.all([
         // 1. Habits
-        Habit.find(),
+        Habit.find({ user: req.user.id }),
         // 2. Prayers
-        Prayer.find({ date: { $gte: todayStart, $lte: todayEnd } }),
+        Prayer.find({ user: req.user.id, date: { $gte: todayStart, $lte: todayEnd } }),
         // 3. Goals (Active goals, sorted by due date)
-        Goal.find({ progress: { $lt: 100 } }).sort({ target_date: 1 }).limit(5),
+        Goal.find({ user: req.user.id, progress: { $lt: 100 } }).sort({ target_date: 1 }).limit(5),
         // 4. Brain Dump (Count unprocessed)
-        BrainDump.countDocuments({ processed: false }),
+        BrainDump.countDocuments({ user: req.user.id, processed: false }),
         // 5. Finance (Current Month Snapshot)
         Finance.aggregate([
-          { $match: { date: { $gte: startOfMonth } } },
+          { $match: { user: new mongoose.Types.ObjectId(req.user.id), date: { $gte: startOfMonth } } },
           { $group: { _id: "$type", total: { $sum: "$amount" } } }
         ])
     ]);

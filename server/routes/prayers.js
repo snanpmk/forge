@@ -1,10 +1,13 @@
 const router = require('express').Router();
 const Prayer = require('../models/Prayer');
+const auth = require('../middleware/auth');
+
+router.use(auth);
 
 // GET prayers for specific date (or today)
 // GET prayers for specific date or range
 // Helper to check and update missed prayers
-const checkMissedPrayers = async (date) => {
+const checkMissedPrayers = async (date, userId) => {
     const now = new Date();
     // Only check for today or past days
     if (date > now) return;
@@ -33,6 +36,7 @@ const checkMissedPrayers = async (date) => {
 
         // Find existing record
         const prayer = await Prayer.findOne({
+            user: userId,
             name,
             date: { $gte: prayerDate, $lt: nextDay }
         });
@@ -40,6 +44,7 @@ const checkMissedPrayers = async (date) => {
         // If no record exists (pending implicitly), creates a 'missed' record
         if (!prayer) {
              await Prayer.create({
+                user: userId,
                 name,
                 status: 'missed',
                 date: prayerDate,
@@ -64,6 +69,7 @@ router.get('/', async (req, res) => {
       end.setHours(23, 59, 59, 999);
 
       const prayers = await Prayer.find({
+        user: req.user.id,
         date: { $gte: start, $lte: end }
       });
       return res.json(prayers);
@@ -74,12 +80,13 @@ router.get('/', async (req, res) => {
     dateQuery.setHours(0,0,0,0);
     
     // Run checks for this date before returning
-    await checkMissedPrayers(dateQuery);
+    await checkMissedPrayers(dateQuery, req.user.id);
 
     const nextDay = new Date(dateQuery);
     nextDay.setDate(nextDay.getDate() + 1);
 
     const prayers = await Prayer.find({
+      user: req.user.id,
       date: { $gte: dateQuery, $lt: nextDay }
     });
     res.json(prayers);
@@ -98,6 +105,7 @@ router.post('/log', async (req, res) => {
 
   try {
     let prayer = await Prayer.findOne({
+      user: req.user.id,
       name,
       date: { $gte: prayerDate, $lt: nextDay }
     });
@@ -108,6 +116,7 @@ router.post('/log', async (req, res) => {
       await prayer.save();
     } else {
       prayer = await Prayer.create({
+        user: req.user.id,
         name,
         status,
         date: prayerDate,

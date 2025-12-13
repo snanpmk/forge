@@ -6,6 +6,11 @@ const PrayerSchema = new mongoose.Schema({
     enum: ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'],
     required: true,
   },
+  user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+  },
   date: {
     type: Date,
     required: true, // Should store the date (day) this prayer belongs to

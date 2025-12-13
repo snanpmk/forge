@@ -6,6 +6,11 @@ const FinanceSchema = new mongoose.Schema({
     enum: ['income', 'expense', 'invested', 'lended', 'borrowed'],
     required: true,
   },
+  user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+  },
   amount: {
     type: Number,
     required: true,

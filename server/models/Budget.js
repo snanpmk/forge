@@ -5,6 +5,11 @@ const BudgetSchema = new mongoose.Schema({
     type: String, // e.g. "Food", "Transport"
     required: true,
   },
+  user: {
+     type: mongoose.Schema.Types.ObjectId,
+     ref: 'User',
+     required: true
+  },
   limit: {
     type: Number,
     required: true,

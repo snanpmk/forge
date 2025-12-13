@@ -1,11 +1,14 @@
 const router = require('express').Router();
 const Task = require('../models/Task');
+const auth = require('../middleware/auth');
+
+router.use(auth);
 
 // GET all tasks (with optional filters)
 router.get('/', async (req, res) => {
   try {
     const { status, startDate, endDate, goal_id } = req.query;
-    let query = {};
+    let query = { user: req.user.id };
 
     if (status) query.status = status;
     if (goal_id) query.goal_link_id = goal_id;
@@ -27,7 +30,7 @@ router.get('/', async (req, res) => {
 // POST new task
 router.post('/', async (req, res) => {
   try {
-    const task = new Task(req.body);
+    const task = new Task({ ...req.body, user: req.user.id });
     const savedTask = await task.save();
     res.json(savedTask);
   } catch (err) {
@@ -39,15 +42,17 @@ const { addXP } = require('../utils/gamification');
 
 // ... (existing imports)
 
-// PUT update task
-router.put('/:id', async (req, res) => {
-  try {
-    const oldTask = await Task.findById(req.params.id);
-    const task = await Task.findByIdAndUpdate(
-        req.params.id, 
-        req.body,
-        { new: true }
-    );
+ // PUT update task
+ router.put('/:id', async (req, res) => {
+   try {
+     const oldTask = await Task.findOne({ _id: req.params.id, user: req.user.id });
+     if (!oldTask) return res.status(404).json({ message: 'Task not found' });
+
+     const task = await Task.findOneAndUpdate(
+         { _id: req.params.id, user: req.user.id },
+         req.body,
+         { new: true }
+     );
     if (!task) return res.status(404).json({ message: 'Task not found' });
 
     // Check if status changed to 'done'
@@ -81,7 +86,7 @@ router.put('/:id', async (req, res) => {
 // DELETE task
 router.delete('/:id', async (req, res) => {
   try {
-    const task = await Task.findByIdAndDelete(req.params.id);
+    const task = await Task.findOneAndDelete({ _id: req.params.id, user: req.user.id });
     if (!task) return res.status(404).json({ message: 'Task not found' });
     res.json({ message: 'Task deleted' });
   } catch (err) {
