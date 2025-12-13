@@ -43,8 +43,8 @@ export default function Sidebar({ isOpen, onClose }) {
 
       <nav 
         className={clsx(
-          "fixed top-0 bottom-0 left-0 flex flex-col items-center py-6 h-full z-30 transition-transform duration-500 w-20 lg:w-24 isolate", 
-          "lg:translate-x-0 lg:static bg-white/40 backdrop-blur-2xl border-r border-white/40 shadow-soft",
+          "fixed top-0 bottom-0 left-0 flex flex-col items-center py-6 h-full z-50 transition-transform duration-500 w-20 lg:w-24 isolate", 
+          "lg:translate-x-0 lg:static bg-white lg:bg-white/40 backdrop-blur-2xl border-r border-white/40 shadow-soft",
           isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full" 
         )}
       >
