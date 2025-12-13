@@ -13,6 +13,7 @@ import { differenceInDays, format, startOfMonth, endOfMonth, eachMonthOfInterval
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
+import Loader from '../components/Loader';
 
 export default function GoalPlanner() {
   const queryClient = useQueryClient();
@@ -134,7 +135,7 @@ export default function GoalPlanner() {
       });
   };
 
-  if (isLoading) return <div className="p-4">Loading...</div>;
+  if (isLoading) return <Loader />;
 
   return (
     <div className="max-w-7xl mx-auto pb-12">

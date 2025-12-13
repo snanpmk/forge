@@ -9,6 +9,7 @@ import {
 } from 'date-fns';
 import clsx from 'clsx';
 import { useMediaQuery } from '../hooks/useMediaQuery';
+import Loader from '../components/Loader';
 
 const PRAYERS = [
   { name: 'Fajr', icon: Sunrise },
@@ -178,9 +179,7 @@ export default function PrayerTracker() {
   );
 }
 
-function Loader() {
-    return <div className="flex items-center justify-center p-20 animate-pulse text-gray-300">Loading...</div>;
-}
+
 
 // Sub-components
 

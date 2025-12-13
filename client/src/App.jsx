@@ -18,10 +18,12 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 
 const queryClient = new QueryClient();
 
+import Loader from './components/Loader';
+
 // Protected Route Component
 const ProtectedRoute = () => {
     const { token, loading } = useAuth();
-    if (loading) return <div className="h-screen flex items-center justify-center">Loading...</div>;
+    if (loading) return <Loader className="h-screen" />;
     return token ? <Outlet /> : <Navigate to="/login" />;
 };
 

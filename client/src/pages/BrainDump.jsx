@@ -7,6 +7,7 @@ import Modal from '../components/ui/Modal';
 import GoalForm from '../components/GoalForm';
 import HabitForm from '../components/HabitForm';
 import toast from 'react-hot-toast';
+import Loader from '../components/Loader';
 
 export default function BrainDump() {
   const queryClient = useQueryClient();
@@ -127,7 +128,7 @@ export default function BrainDump() {
     setConvertPriority('medium');
   };
 
-  if (isLoading) return <div className="p-4">Loading...</div>;
+  if (isLoading) return <Loader />;
 
   return (
     <div className="max-w-3xl mx-auto h-full flex flex-col pb-6">

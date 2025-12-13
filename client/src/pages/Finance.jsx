@@ -8,6 +8,8 @@ import Button from '../components/ui/Button';
 import toast from 'react-hot-toast';
 import FinanceAnalytics from '../components/FinanceAnalytics';
 
+import Loader from '../components/Loader';
+
 const TRANSACTION_TYPES = [
   { id: 'income', label: 'Income', icon: TrendingUp },
   { id: 'expense', label: 'Expense', icon: TrendingDown },
@@ -140,7 +142,7 @@ export default function Finance() {
     return { limit, spent, percentage: limit > 0 ? Math.min((spent / limit) * 100, 100) : 0 };
   };
 
-  if (loadingTransactions) return <div className="p-4">Loading...</div>;
+  if (loadingTransactions) return <Loader />;
 
   return (
     <div className="mx-auto pb-10">
