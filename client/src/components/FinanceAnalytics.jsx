@@ -4,6 +4,7 @@ import {
   PieChart, Pie, Cell, Legend
 } from 'recharts';
 import { format, subDays, startOfMonth, startOfWeek, isSameDay } from 'date-fns';
+import clsx from 'clsx';
 
 export default function FinanceAnalytics({ transactions }) {
   if (!transactions || transactions.length === 0) return null;

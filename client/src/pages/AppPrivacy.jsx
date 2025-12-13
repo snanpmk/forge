@@ -44,6 +44,45 @@ export default function PrivacyPolicy() {
           If you have any questions about this privacy policy or our privacy practices, please contact us.
         </p>
       </div>
+      <div className="mt-12 pt-8 border-t border-gray-100">
+          <div className="flex justify-center opacity-0 hover:opacity-100 transition-opacity duration-500">
+              <button 
+                  onClick={async () => {
+                      if (window.confirm("⚠️ DANGER ZONE ⚠️\n\nAre you sure you want to PERMANENTLY DELETE all your data?\n(Goals, Habits, Prayers, Finance, Tasks)\n\nThis action cannot be undone.")) {
+                          if (window.confirm("Please confirm again.\n\nType 'RESET' in your mind and click OK to wipe everything.")) {
+                              try {
+                                  // We need to import api here, but PrivacyPolicy is a component.
+                                  // Let's assume we can import it at the top level or use fetch. 
+                                  // Since we don't have 'api' imported in this file yet, I'll update imports too.
+                                  const token = localStorage.getItem('token');
+                                  if(!token) return;
+                                  
+                                  const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/user/reset`, {
+                                      method: 'DELETE',
+                                      headers: {
+                                          'Authorization': `Bearer ${token}`
+                                      }
+                                  });
+                                  
+                                  if (res.ok) {
+                                      alert("Data wiped. Refreshing...");
+                                      window.location.reload();
+                                  } else {
+                                      alert("Failed to reset data.");
+                                  }
+                              } catch (e) {
+                                  console.error(e);
+                                  alert("Error resetting data.");
+                              }
+                          }
+                      }
+                  }}
+                  className="text-xs text-red-200 hover:text-red-500 font-mono transition-colors"
+              >
+                  Reset Data
+              </button>
+          </div>
+      </div>
     </div>
   );
 }

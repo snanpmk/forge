@@ -18,8 +18,31 @@ const TRANSACTION_TYPES = [
   { id: 'borrowed', label: 'Borrowed', icon: HandCoins },
 ];
 
-const CATEGORIES = [
-  "Food", "Rent", "Transport", "Bills", "Shopping", "Entertainment", "Health", "Education", "Other"
+const INCOME_CATEGORIES = [
+  "Salary", "Freelance", "Business Profit", "Investments", "Dividends", 
+  "Rental Income", "Refunds", "Grants/Awards", "Gifts", "Allowance", 
+  "Bonus", "Side Hustle", "Pension", "Other"
+];
+
+const EXPENSE_CATEGORIES = [
+  // Housing & Utilities
+  "Rent/Mortgage", "Maintenance", "Electricity", "Water", "Internet/WiFi", "Phone Bill", "Gas",
+  // Food & Daily
+  "Groceries", "Dining Out", "Coffee/Snacks", "Alcohol",
+  // Transportation
+  "Fuel", "Public Transport", "Taxi/Uber", "Car Maintenance", "Parking", "Vehicle Insurance",
+  // Personal & Health
+  "Health Insurance", "Doctor/Medical", "Pharmacy", "Gym/Fitness", "Personal Care", "Hair/Beauty",
+  // Shopping & Lifestyle
+  "Clothing", "Electronics", "Home Decor", "Subscriptions", "Hobbies", "Entertainment",
+  // Education & Work
+  "Tuition", "Books/Courses", "Stationery", "Software",
+  // Financial
+  "Loan Repayment", "Credit Card Bill", "Tax", "Insurance", "Fees/Charges",
+  // Social & Family
+  "Gifts", "Donations", "Family Support", "Pet Care", "Childcare",
+  // Other
+  "Travel", "Emergency", "Other"
 ];
 
 export default function Finance() {
@@ -33,12 +56,12 @@ export default function Finance() {
     amount: '',
     category: '',
     description: '',
-    related_entity: ''
+    related_entity: '' // For loans/debts
   });
 
   // Budget Form State
   const [budgetForm, setBudgetForm] = useState({
-    category: 'Food',
+    category: EXPENSE_CATEGORIES[0],
     limit: ''
   });
 
@@ -71,7 +94,7 @@ export default function Finance() {
     onSuccess: () => {
       queryClient.invalidateQueries(['finance']);
       queryClient.invalidateQueries(['dashboard']);
-      setFormData({ type: 'expense', amount: '', category: '', description: '', related_entity: '' });
+      setFormData(prev => ({ ...prev, amount: '', description: '', related_entity: '' })); // Keep type/category for rapid entry
       toast.success('Transaction added');
     },
   });
@@ -91,7 +114,7 @@ export default function Finance() {
     onSuccess: () => {
       queryClient.invalidateQueries(['budget']);
       toast.success('Budget updated');
-      setBudgetForm({ category: 'Food', limit: '' });
+      setBudgetForm({ category: EXPENSE_CATEGORIES[0], limit: '' });
     },
   });
 
@@ -131,10 +154,9 @@ export default function Finance() {
   const getBudgetProgress = (category) => {
     const limit = budgets?.find(b => b.category === category)?.limit || 0;
     const spent = transactions
-      ?.filter(t => t.type === 'expense' && t.category.toLowerCase() === category.toLowerCase() && t.date.startsWith(currentMonth)) // Note: t.date is ISO string, simplistic check
-      // Better date check:
       ?.filter(t => {
          const tDate = t.date.substring(0, 7); // YYYY-MM
+         // Match category loosely to allow for legacy data
          return t.type === 'expense' && t.category.toLowerCase() === category.toLowerCase() && tDate === currentMonth;
       })
       .reduce((acc, t) => acc + t.amount, 0) || 0;
@@ -142,32 +164,35 @@ export default function Finance() {
     return { limit, spent, percentage: limit > 0 ? Math.min((spent / limit) * 100, 100) : 0 };
   };
 
+  const activeCategories = ['income', 'borrowed'].includes(formData.type) ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+
+  // Initialize category if empty or mismatch
+  React.useEffect(() => {
+      if (!activeCategories.includes(formData.category)) {
+          setFormData(prev => ({ ...prev, category: activeCategories[0] }));
+      }
+  }, [formData.type]);
+
   if (loadingTransactions) return <Loader />;
 
   return (
     <div className="mx-auto pb-10">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
-        <h1 className="text-2xl sm:text-3xl font-bold">Finance</h1>
+      <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
+        <h1 className="text-2xl sm:text-3xl font-bold soft-gradient-text tracking-tight">Finance</h1>
         {/* Toggle Tabs */}
-        <div className="flex bg-gray-100 p-1 rounded-lg w-full sm:w-auto">
-           <button 
-             onClick={() => setActiveTab('transactions')}
-             className={clsx("flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition-colors text-center", activeTab === 'transactions' ? "bg-white shadow text-black" : "text-gray-500 hover:text-black")}
-           >
-             Transactions
-           </button>
-            <button 
-             onClick={() => setActiveTab('analytics')}
-             className={clsx("flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition-colors text-center", activeTab === 'analytics' ? "bg-white shadow text-black" : "text-gray-500 hover:text-black")}
-           >
-             Analytics
-           </button>
-           <button 
-             onClick={() => setActiveTab('budget')}
-             className={clsx("flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition-colors text-center", activeTab === 'budget' ? "bg-white shadow text-black" : "text-gray-500 hover:text-black")}
-           >
-             Budget Planner
-           </button>
+        <div className="flex bg-gray-100/80 p-1.5 rounded-xl w-full sm:w-auto shadow-inner">
+           {['transactions', 'analytics', 'budget'].map(tab => (
+               <button 
+                 key={tab}
+                 onClick={() => setActiveTab(tab)}
+                 className={clsx(
+                     "flex-1 sm:flex-none px-5 py-2 rounded-lg text-sm font-bold transition-all capitalize", 
+                     activeTab === tab ? "bg-white shadow-sm text-primary scale-105" : "text-gray-500 hover:text-gray-900"
+                 )}
+               >
+                 {tab === 'budget' ? 'Budgeting' : tab}
+               </button>
+           ))}
         </div>
       </div>
 
@@ -176,62 +201,67 @@ export default function Finance() {
       )}
 
       {activeTab === 'transactions' ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fade-in">
 
           {/* Left Col: Form and Summary */}
           <div className="space-y-6">
             {/* Summary Card */}
-            <div className="card bg-black text-white border-none space-y-4">
-              <div>
-                <span className="text-gray-400 text-sm">Net Balance</span>
-                <div className="text-4xl font-bold font-mono">₹{net.toFixed(2)}</div>
+            <div className="card bg-black text-white border-none space-y-5 p-6 shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-10 -mt-10" />
+              <div className="relative z-10">
+                <span className="text-gray-400 text-xs font-bold uppercase tracking-wider">Net Balance</span>
+                <div className="text-4xl sm:text-5xl font-bold font-mono mt-1 tracking-tight">₹{net.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
               </div>
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-800">
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-800 relative z-10">
                 <div>
-                  <div className="flex items-center gap-1 text-green-400 text-sm mb-1">
-                    <TrendingUp size={14} /> In (Inc+Bor)
+                  <div className="flex items-center gap-1.5 text-green-400 text-xs font-bold uppercase mb-1">
+                    <div className="p-1 bg-green-400/20 rounded"><TrendingUp size={12} /></div> In
                   </div>
-                  <div className="font-mono text-xl">₹{totalIn.toFixed(2)}</div>
+                  <div className="font-mono text-lg font-bold">₹{totalIn.toLocaleString('en-IN')}</div>
                 </div>
                 <div>
-                  <div className="flex items-center gap-1 text-red-400 text-sm mb-1">
-                    <TrendingDown size={14} /> Out (Exp+Len+Inv)
+                  <div className="flex items-center gap-1.5 text-red-400 text-xs font-bold uppercase mb-1">
+                     <div className="p-1 bg-red-400/20 rounded"><TrendingDown size={12} /></div> Out
                   </div>
-                  <div className="font-mono text-xl">₹{totalOut.toFixed(2)}</div>
+                  <div className="font-mono text-lg font-bold">₹{totalOut.toLocaleString('en-IN')}</div>
                 </div>
               </div>
             </div>
 
             {/* Add Transaction Form */}
-            <div className="card">
-              <h3 className="font-bold mb-4">New Transaction</h3>
-              <form onSubmit={handleSubmitTransaction} className="space-y-4">
-                <div className="grid grid-cols-3 gap-2 bg-gray-50 rounded-lg p-1">
-                  {TRANSACTION_TYPES.map(({ id, label }) => (
+            <div className="card shadow-soft p-6">
+              <h3 className="font-bold text-lg mb-5">New Transaction</h3>
+              <form onSubmit={handleSubmitTransaction} className="space-y-5">
+                {/* Type Selection */}
+                <div className="p-1 bg-gray-50 rounded-xl grid grid-cols-5 gap-1">
+                  {TRANSACTION_TYPES.map(({ id, label, icon: Icon }) => (
                     <button
                       key={id}
                       type="button"
+                      title={label}
                       className={clsx(
-                        "py-1.5 rounded-md text-[10px] sm:text-xs font-medium transition-all border",
+                        "py-2 rounded-lg flex items-center justify-center transition-all",
                         formData.type === id 
-                          ? "bg-black text-white border-black shadow-md" 
-                          : "bg-white text-gray-500 border-transparent hover:border-gray-200"
+                          ? "bg-white text-black shadow-sm ring-1 ring-black/5" 
+                          : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
                       )}
                       onClick={() => setFormData({ ...formData, type: id })}
                     >
-                      {label}
+                      <Icon size={18} />
                     </button>
                   ))}
                 </div>
                 
-                <div>
-                  <input
-                    type="number"
-                    placeholder="Amount (₹)"
-                    className="input-field"
-                    value={formData.amount}
-                    onChange={e => setFormData({...formData, amount: e.target.value})}
-                  />
+                {/* Amount */}
+                <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₹</span>
+                    <input
+                        type="number"
+                        placeholder="0.00"
+                        className="input-field pl-8 font-mono text-lg font-bold"
+                        value={formData.amount}
+                        onChange={e => setFormData({...formData, amount: e.target.value})}
+                    />
                 </div>
                 
                 {/* Dynamic Entity Field for Loan/Invest */}
@@ -240,7 +270,7 @@ export default function Finance() {
                         <input
                             type="text"
                             placeholder={getEntityPlaceholder(formData.type)}
-                            className="input-field bg-blue-50/50 border-blue-100 focus:border-blue-300"
+                            className="input-field bg-blue-50/50 border-blue-100 focus:border-blue-300 placeholder:text-blue-300"
                             value={formData.related_entity}
                             onChange={e => setFormData({...formData, related_entity: e.target.value})}
                         />
@@ -249,23 +279,23 @@ export default function Finance() {
                 
                 {/* Link to Goal / Task (Expenses only) */}
                 {formData.type === 'expense' && (
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-3">
                         <select
-                            className="input-field text-xs"
+                            className="input-field text-xs py-2.5"
                             value={formData.goal_link_id || ''}
                             onChange={e => setFormData({ ...formData, goal_link_id: e.target.value || null, task_link_id: null })}
                         >
-                            <option value="">Link to Goal (Optional)</option>
+                            <option value="">Link Goal (Opt)</option>
                             {goals?.map(g => (
                                 <option key={g._id} value={g._id}>{g.title}</option>
                             ))}
                         </select>
                          <select
-                            className="input-field text-xs"
+                            className="input-field text-xs py-2.5"
                             value={formData.task_link_id || ''}
                             onChange={e => setFormData({ ...formData, task_link_id: e.target.value || null, goal_link_id: null })}
                         >
-                            <option value="">Link to Task (Optional)</option>
+                            <option value="">Link Task (Opt)</option>
                             {tasks?.map(t => (
                                 <option key={t._id} value={t._id}>{t.title}</option>
                             ))}
@@ -273,29 +303,54 @@ export default function Finance() {
                     </div>
                 )}
 
+                {/* Category Selection - REVERTED TO SELECT + CUSTOM */}
                 <div>
-                  <input
-                    type="text" // Could act as autocomplete in future
-                    placeholder="Category (e.g., Food, Salary)"
-                    list="category-suggestions"
-                    className="input-field"
-                    value={formData.category}
-                    onChange={e => setFormData({...formData, category: e.target.value})}
-                  />
-                  <datalist id="category-suggestions">
-                    {CATEGORIES.map(c => <option key={c} value={c} />)}
-                  </datalist>
+                   <label className="block text-xs font-bold text-gray-400 uppercase mb-2 ml-1">Category</label>
+                   <div className="flex flex-col gap-2">
+                       <select
+                           className="input-field appearance-none"
+                           value={activeCategories.includes(formData.category) ? formData.category : 'Other'}
+                           onChange={e => {
+                               const val = e.target.value;
+                               if (val === 'Other') {
+                                   setFormData({...formData, category: ''}); // Clear for custom input
+                               } else {
+                                   setFormData({...formData, category: val});
+                               }
+                           }}
+                       >
+                            <option value="" disabled>Select Category</option>
+                            {activeCategories.map(cat => (
+                                <option key={cat} value={cat}>{cat}</option>
+                            ))}
+                            <option value="Other">Other (Custom)</option>
+                       </select>
+                       
+                       {/* Show Input if 'Other' is selected implicitly or explicitly */}
+                       {(!activeCategories.includes(formData.category) || formData.category === 'Other') && (
+                           <input
+                               type="text"
+                               placeholder="Enter Custom Category..."
+                               className="input-field bg-gray-50 border-gray-200"
+                               value={formData.category === 'Other' ? '' : formData.category}
+                               onChange={e => setFormData({...formData, category: e.target.value})}
+                               autoFocus
+                           />
+                       )}
+                   </div>
                 </div>
+
                 <div>
                   <input
                     type="text"
-                    placeholder="Description (Optional)"
-                    className="input-field"
+                    placeholder="Note / Description"
+                    className="input-field text-sm"
                     value={formData.description}
                     onChange={e => setFormData({...formData, description: e.target.value})}
                   />
                 </div>
-                <Button type="submit" className="w-full">
+
+                <Button type="submit" className="w-full py-3 text-sm font-bold shadow-lg shadow-black/20 hover:shadow-xl hover:shadow-black/30 transition-all active:scale-[0.98]">
                   Add Transaction
                 </Button>
               </form>
@@ -303,15 +358,15 @@ export default function Finance() {
           </div>
 
           {/* Right Col: Transactions List */}
-          <div className="lg:col-span-2">
-            <div className="flex items-center justify-between mb-4">
+          <div className="lg:col-span-2 space-y-6">
+            <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold">Recent History</h2>
                 {/* Filter Dropdown */}
                 <div className="relative inline-block">
                     <select 
                         value={filterType} 
                         onChange={(e) => setFilterType(e.target.value)}
-                        className="appearance-none bg-white border border-gray-300 text-gray-700 py-1 pl-3 pr-8 rounded leading-tight focus:outline-none focus:border-black text-sm font-medium h-9"
+                        className="appearance-none bg-white border border-gray-200 text-gray-700 py-1.5 pl-3 pr-8 rounded-xl leading-tight focus:outline-none focus:border-black text-xs font-bold h-9 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors"
                     >
                         <option value="all">All Transactions</option>
                         {TRANSACTION_TYPES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
@@ -322,48 +377,61 @@ export default function Finance() {
                 </div>
             </div>
 
-            <div className="space-y-3 max-h-[800px] overflow-y-auto pr-1">
-              {filteredTransactions.length === 0 ? <p className="text-gray-500">No transactions recorded.</p> : (
-                filteredTransactions.map(t => {
+            <div className="space-y-3">
+              {filteredTransactions.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-20 text-center opacity-50">
+                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                          <DollarSign size={24} className="text-gray-400" />
+                      </div>
+                      <p className="text-gray-500 font-medium">No transactions found.</p>
+                  </div>
+              ) : (
+                filteredTransactions.map((t, idx) => {
                   const isPositive = ['income', 'borrowed'].includes(t.type);
                   return (
-                  <div key={t._id} className="group bg-white border border-gray-200 p-4 rounded-xl flex items-center justify-between hover:border-black transition-colors">
+                  <div 
+                    key={t._id} 
+                    className="group bg-white border border-gray-100 p-4 rounded-2xl flex items-center justify-between hover:border-gray-300 hover:shadow-soft transition-all animate-slide-up"
+                    style={{ animationDelay: `${idx * 50}ms` }}
+                  >
                     <div className="flex items-center gap-4">
                       <div className={clsx(
-                        "w-10 h-10 rounded-full flex items-center justify-center border shrink-0",
-                        isPositive ? "bg-green-50 border-green-100 text-green-600" : "bg-red-50 border-red-100 text-red-600"
+                        "w-12 h-12 rounded-2xl flex items-center justify-center transition-colors",
+                        isPositive ? "bg-green-50 text-green-600 group-hover:bg-green-100" : "bg-red-50 text-red-600 group-hover:bg-red-100"
                       )}>
-                        <IndianRupee size={20} />
+                        {isPositive ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
                       </div>
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-bold text-gray-900">{t.category}</span>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 uppercase tracking-wide font-bold">
+                          <span className={clsx(
+                              "text-[10px] px-2 py-0.5 rounded-md uppercase tracking-wide font-bold",
+                              isPositive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                          )}>
                             {t.type}
                           </span>
                         </div>
                         {/* Details Row */}
-                        <div className="text-xs text-gray-500 mt-1">
-                            <span className="font-mono">{format(new Date(t.date), 'MMM d, yyyy')}</span>
-                            {t.related_entity && (
-                                <span className="ml-2 font-medium text-black">
-                                    {t.type === 'lended' ? '→ ' : t.type === 'borrowed' ? '← ' : '@ '} 
-                                    {t.related_entity}
-                                </span>
-                            )}
-                            {t.description && <span className="ml-2 text-gray-400">• {t.description}</span>}
+                        <div className="text-xs text-gray-500 mt-1 flex items-center gap-2">
+                            <span className="font-mono">{format(new Date(t.date), 'MMM d')}</span>
+                            {(t.related_entity || t.description) && <span className="w-1 h-1 rounded-full bg-gray-300" />}
+                            <span className="truncate max-w-[150px] sm:max-w-[300px]">
+                                {t.related_entity && <span className="font-bold text-gray-700 mr-1">{t.related_entity}</span>}
+                                {t.description}
+                            </span>
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
-                      <span className={clsx("font-mono font-bold whitespace-nowrap", isPositive ? "text-green-600" : "text-black")}>
-                        {isPositive ? '+' : '-'}₹{t.amount.toFixed(2)}
+                      <span className={clsx("font-mono font-bold whitespace-nowrap text-lg", isPositive ? "text-green-600" : "text-gray-900")}>
+                        {isPositive ? '+' : '-'}₹{t.amount.toLocaleString('en-IN')}
                       </span>
                       <button 
                         onClick={() => deleteTransactionMutation.mutate(t._id)}
-                        className="opacity-100 md:opacity-0 md:group-hover:opacity-100 p-2 text-gray-400 hover:text-red-500 transition-all"
+                        className="opacity-0 group-hover:opacity-100 p-2 text-gray-300 hover:text-red-500 transition-all hover:bg-red-50 rounded-lg transform scale-90 active:scale-95"
+                        title="Delete"
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={18} />
                       </button>
                     </div>
                   </div>
@@ -373,79 +441,107 @@ export default function Finance() {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fade-in">
            {/* Budget Planning Form */}
            <div className="space-y-6">
-              <div className="card">
-                <div className="flex items-center gap-2 mb-4">
-                  <PieChart className="text-black" />
-                  <h3 className="font-bold">Set Monthly Budget</h3>
+              <div className="card shadow-soft p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-3 bg-black text-white rounded-xl shadow-lg">
+                      <PieChart size={20} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg leading-tight">Monthly Budget</h3>
+                    <p className="text-xs text-gray-500 font-medium">{format(new Date(), 'MMMM yyyy')}</p>
+                  </div>
                 </div>
-                <p className="text-sm text-gray-500 mb-4">Plan your spending limits for <span className="font-bold text-black">{format(new Date(), 'MMMM yyyy')}</span>.</p>
                 
-                <form onSubmit={handleSubmitBudget} className="space-y-4">
+                <form onSubmit={handleSubmitBudget} className="space-y-5">
                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                      <label className="label">Category</label>
                       <select 
                         className="input-field"
                         value={budgetForm.category}
                         onChange={e => setBudgetForm({...budgetForm, category: e.target.value})}
                       >
-                        {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                        {EXPENSE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                       </select>
                    </div>
                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Limit (₹)</label>
-                      <input 
-                        type="number"
-                        className="input-field"
-                        placeholder="e.g. 5000"
-                        value={budgetForm.limit}
-                        onChange={e => setBudgetForm({...budgetForm, limit: e.target.value})}
-                      />
+                      <label className="label">Monthly Limit</label>
+                      <div className="relative">
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₹</span>
+                          <input 
+                            type="number"
+                            className="input-field pl-8 font-mono font-bold"
+                            placeholder="5000"
+                            value={budgetForm.limit}
+                            onChange={e => setBudgetForm({...budgetForm, limit: e.target.value})}
+                          />
+                      </div>
                    </div>
-                   <Button type="submit" className="w-full">Set Budget</Button>
+                   <Button type="submit" className="w-full shadow-lg shadow-primary/20">Set Limit</Button>
                 </form>
               </div>
            </div>
 
            {/* Budget List & Progress */}
            <div className="lg:col-span-2 space-y-4">
-              <h2 className="text-xl font-bold">Budget Status</h2>
+              <div className="flex items-center justify-between mb-2">
+                 <h2 className="text-xl font-bold">Your Budgets</h2>
+                 <span className="text-sm font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full">{budgets?.length || 0} Categories</span>
+              </div>
+              
               {budgets?.length === 0 ? (
-                <div className="text-center py-10 text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-300">
-                  No budgets set for this month. Start planning!
+                <div className="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed border-gray-200 rounded-3xl bg-gray-50/50">
+                  <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mb-4 text-gray-400">
+                      <PieChart size={24} />
+                  </div>
+                  <p className="text-gray-500 font-medium">No budgets set for this month.</p>
+                  <p className="text-xs text-gray-400 mt-1">Start by adding a category limit on the left.</p>
                 </div>
               ) : (
-                budgets?.map(budget => {
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {budgets?.map(budget => {
                   const { limit, spent, percentage } = getBudgetProgress(budget.category);
                   const isOver = spent > limit;
+                  const isNear = percentage > 80 && !isOver;
+                  
                   return (
-                    <div key={budget._id} className="card">
-                      <div className="flex justify-between items-end mb-2">
+                    <div key={budget._id} className="card group hover:shadow-soft transition-all border border-gray-100">
+                      <div className="flex justify-between items-start mb-4">
                          <div>
                             <h4 className="font-bold text-lg">{budget.category}</h4>
-                            <div className="text-xs text-gray-500">
-                              Spent <span className={isOver ? "text-red-500 font-bold" : "text-black font-bold"}>₹{spent}</span> of <span className="text-gray-800">₹{limit}</span>
+                            <div className="text-xs font-medium text-gray-400 mt-0.5">
+                              Budget: ₹{limit.toLocaleString()}
                             </div>
                          </div>
-                         <div className="text-right">
-                           <span className={clsx("font-bold text-lg", isOver ? "text-red-500" : "text-black")}>
+                         <div className={clsx(
+                             "w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold shadow-sm",
+                             isOver ? "bg-red-100 text-red-600" : isNear ? "bg-amber-100 text-amber-600" : "bg-green-100 text-green-600"
+                         )}>
                              {percentage.toFixed(0)}%
-                           </span>
                          </div>
                       </div>
                       
+                      {/* Detailed Stats */}
+                      <div className="flex items-end justify-between text-sm mb-2">
+                          <span className={clsx("font-bold", isOver ? "text-red-500" : "text-gray-900")}>₹{spent.toLocaleString()}</span>
+                          <span className="text-xs text-gray-400 font-medium">remaining: ₹{Math.max(0, limit - spent).toLocaleString()}</span>
+                      </div>
+
                       {/* Progress Bar */}
-                      <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
                         <div 
-                          className={clsx("h-full transition-all duration-500", isOver ? "bg-red-500" : "bg-black")}
+                          className={clsx("h-full transition-all duration-1000 ease-out rounded-full", 
+                              isOver ? "bg-red-500" : isNear ? "bg-amber-500" : "bg-black"
+                          )}
                           style={{ width: `${Math.min(percentage, 100)}%` }}
                         />
                       </div>
                     </div>
                   );
-                })
+                })}
+                </div>
               )}
            </div>
         </div>

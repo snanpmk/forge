@@ -8,7 +8,7 @@ import clsx from 'clsx';
 import { TrendingUp, Activity, Zap } from 'lucide-react';
 
 export default function DashboardAnalytics() {
-  const [days, setDays] = useState(7); // Default to Weekly (7 days)
+  const [days, setDays] = useState(7); // 7, 30, 365
 
   const { data: trends, isLoading } = useQuery({
     queryKey: ['analytics-dashboard', days],
@@ -18,12 +18,10 @@ export default function DashboardAnalytics() {
   if (isLoading) return <div className="h-48 flex items-center justify-center text-gray-400">Loading insights...</div>;
   if (!trends || trends.length === 0) return null;
 
-  // Calculate averages for the "Score Cards"
-  // If viewing 30 days, maybe still show last 7 days avg? Or avg of selected period?
-  // Let's show avg of selected period for consistency.
-  const avgOverall = Math.round(trends.reduce((acc, d) => acc + d.overallScore, 0) / trends.length);
-  const avgHabit = Math.round(trends.reduce((acc, d) => acc + d.habitScore, 0) / trends.length);
-  const avgPrayer = Math.round(trends.reduce((acc, d) => acc + d.prayerScore, 0) / trends.length);
+  // Compute Averages
+  const avgOverall = Math.round(trends.reduce((acc, d) => acc + (d.overallScore || 0), 0) / trends.length);
+  const totalTasks = trends.reduce((acc, d) => acc + (d.tasks || 0), 0);
+  const totalExpense = trends.reduce((acc, d) => acc + (d.expense || 0), 0);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -38,8 +36,9 @@ export default function DashboardAnalytics() {
             {/* Filter Controls */}
             <div className="flex bg-white border border-gray-100 p-1 rounded-xl w-full sm:w-auto shadow-sm">
                 {[
-                    { label: 'Weekly', val: 7 }, 
-                    { label: 'Monthly', val: 30 }
+                    { label: 'Week', val: 7 }, 
+                    { label: 'Month', val: 30 },
+                    { label: 'Year', val: 365 }
                 ].map((opt) => (
                     <button
                         key={opt.val}
@@ -62,24 +61,23 @@ export default function DashboardAnalytics() {
         <div className="card bg-primary text-white border-none p-5 relative overflow-hidden group hover:scale-[1.02] transition-transform">
              <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-6 -mt-6" />
             <div className="flex items-center gap-2 text-gray-300 text-xs uppercase tracking-wider mb-2 font-semibold">
-                <Zap size={14} className="text-yellow-400" /> Overall Score
+                <Zap size={14} className="text-yellow-400" /> Overall Consistency
             </div>
-            <div className="text-4xl font-display font-bold">{avgOverall}</div>
-            <div className="text-[10px] text-gray-400 mt-2 font-medium">Avg for last {days} days</div>
+            <div className="text-4xl font-display font-bold">{avgOverall}%</div>
         </div>
-        <div className="card bg-white border-2 border-transparent hover:border-wellness-lavender/50 p-5 group hover:scale-[1.02] transition-all duration-300 shadow-sm hover:shadow-soft">
-             <div className="text-muted text-xs uppercase tracking-wider mb-2 font-semibold">Habit Consistency</div>
-             <div className="text-4xl font-display font-bold text-gray-800">{avgHabit}%</div>
+        <div className="card bg-white border-2 border-transparent hover:border-blue-100 p-5 group hover:scale-[1.02] transition-all duration-300 shadow-sm hover:shadow-soft">
+             <div className="text-muted text-xs uppercase tracking-wider mb-2 font-semibold">Total Tasks Done</div>
+             <div className="text-4xl font-display font-bold text-blue-600">{totalTasks}</div>
         </div>
-        <div className="card bg-white border-2 border-transparent hover:border-wellness-blue/50 p-5 group hover:scale-[1.02] transition-all duration-300 shadow-sm hover:shadow-soft">
-             <div className="text-muted text-xs uppercase tracking-wider mb-2 font-semibold">Prayer On-Time</div>
-             <div className="text-4xl font-display font-bold text-gray-800">{avgPrayer}%</div>
+        <div className="card bg-white border-2 border-transparent hover:border-red-100 p-5 group hover:scale-[1.02] transition-all duration-300 shadow-sm hover:shadow-soft">
+             <div className="text-muted text-xs uppercase tracking-wider mb-2 font-semibold">Total Spent</div>
+             <div className="text-4xl font-display font-bold text-red-500">₹{totalExpense.toLocaleString()}</div>
         </div>
       </div>
 
       {/* Main Chart */}
       <div className="card h-72 sm:h-96 flex flex-col p-6 border border-gray-100 shadow-soft">
-        <h3 className="font-bold text-lg mb-6 text-primary">{days === 7 ? 'Weekly' : 'Monthly'} Trend</h3>
+        <h3 className="font-bold text-lg mb-6 text-primary">{days === 365 ? 'Yearly Overview' : days === 30 ? 'Monthly Trend' : 'Weekly Trend'}</h3>
         <div className="flex-1 w-full min-h-0">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={trends} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -88,33 +86,44 @@ export default function DashboardAnalytics() {
                   <stop offset="5%" stopColor="#1f2937" stopOpacity={0.2}/>
                   <stop offset="95%" stopColor="#1f2937" stopOpacity={0}/>
                 </linearGradient>
-                <linearGradient id="colorHabit" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#a78bfa" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#a78bfa" stopOpacity={0}/>
-                </linearGradient>
-                <linearGradient id="colorPrayer" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#2dd4bf" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#2dd4bf" stopOpacity={0}/>
+                <linearGradient id="colorTasks" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
+                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                 </linearGradient>
               </defs>
               <XAxis dataKey="date" fontSize={11} tickLine={false} axisLine={false} tickMargin={15} stroke="#9ca3af" />
-              <YAxis fontSize={11} tickLine={false} axisLine={false} domain={[0, 100]} stroke="#9ca3af" />
+              <YAxis yAxisId="left" fontSize={11} tickLine={false} axisLine={false} domain={[0, 100]} stroke="#9ca3af" />
+              <YAxis yAxisId="right" orientation="right" fontSize={11} tickLine={false} axisLine={false} stroke="#cbd5e1" hide={days===365}/>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
               <Tooltip 
                 cursor={{ stroke: '#e2e8f0', strokeWidth: 1 }}
                 content={({ active, payload, label }) => {
                     if (active && payload && payload.length) {
                     return (
-                        <div className="bg-white/90 backdrop-blur-md p-4 border border-white/50 shadow-xl rounded-2xl">
-                        <p className="font-bold text-sm mb-3 text-primary">{label}</p>
+                        <div className="bg-white/90 backdrop-blur-md p-4 border border-white/50 shadow-xl rounded-2xl min-w-[200px]">
+                        <p className="font-bold text-sm mb-3 text-primary border-b border-gray-100 pb-2">{label}</p>
                         <div className="space-y-2">
-                            {payload.map((entry, index) => (
-                            <div key={index} className="flex items-center gap-3 text-xs font-medium">
-                                <span className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: entry.stroke }}></span>
-                                <span className="text-gray-500 capitalize min-w-[60px]">{entry.name}:</span>
-                                <span className="font-bold text-primary">{entry.value}%</span>
-                            </div>
-                            ))}
+                             {/* Consistency Code */}
+                            {payload.find(p => p.name === 'Consistency') && (
+                              <div className="flex justify-between items-center text-xs">
+                                <span className="text-gray-500">Consistency</span>
+                                <span className="font-bold text-primary">{payload.find(p => p.name === 'Consistency').value}%</span>
+                              </div>
+                            )}
+                            {/* Tasks */}
+                            {payload.find(p => p.name === 'Tasks Completed') && (
+                              <div className="flex justify-between items-center text-xs">
+                                <span className="text-gray-500">Tasks</span>
+                                <span className="font-bold text-blue-600">{payload.find(p => p.name === 'Tasks Completed').value}</span>
+                              </div>
+                            )}
+                             {/* Expense */}
+                             {payload.find(p => p.name !== 'Consistency' && p.name !== 'Tasks Completed') && (
+                                <div className="flex justify-between items-center text-xs">
+                                    <span className="text-gray-500">Expense</span>
+                                    <span className="font-bold text-red-500">₹{payload.find(p => p.dataKey === 'expense')?.value}</span>
+                                </div>
+                             )}
                         </div>
                         </div>
                     );
@@ -123,33 +132,28 @@ export default function DashboardAnalytics() {
                 }}
               />
               <Legend verticalAlign="top" height={36} iconType="circle" wrapperStyle={{ paddingBottom: '20px', fontSize: '12px', fontWeight: 600 }} />
+              
               <Area 
+                yAxisId="left"
                 type="monotone" 
                 dataKey="overallScore" 
-                name="Overall" 
+                name="Consistency" 
                 stroke="#1f2937" 
                 strokeWidth={3}
                 fillOpacity={1} 
                 fill="url(#colorOverall)" 
               />
-              <Area 
+              
+              {days !== 365 && <Area 
+                yAxisId="right"
                 type="monotone" 
-                dataKey="habitScore" 
-                name="Habits" 
-                stroke="#a78bfa" 
+                dataKey="tasks" 
+                name="Tasks Completed" 
+                stroke="#3b82f6" 
                 strokeWidth={2}
                 fillOpacity={1}
-                fill="url(#colorHabit)" 
-              />
-               <Area 
-                type="monotone" 
-                dataKey="prayerScore" 
-                name="Prayers" 
-                stroke="#2dd4bf" 
-                strokeWidth={2}
-                fillOpacity={1}
-                fill="url(#colorPrayer)" 
-              />
+                fill="url(#colorTasks)" 
+              />}
             </AreaChart>
           </ResponsiveContainer>
         </div>

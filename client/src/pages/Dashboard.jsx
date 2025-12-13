@@ -1,7 +1,7 @@
 import React from 'react';
 import { useDashboard } from '../hooks/useDashboard';
 import { useAuth } from '../context/AuthContext';
-import { CheckCircle, XCircle, Brain, Target, DollarSign, Loader2 } from 'lucide-react';
+import { CheckCircle, XCircle, Brain, Target, DollarSign, Loader2, Activity, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import DashboardAnalytics from '../components/DashboardAnalytics';
 
@@ -24,7 +24,7 @@ export default function Dashboard() {
     return <div className="text-red-500">Error loading dashboard: {error.message}</div>;
   }
 
-  const { habits, prayers, goals, brainDumpCount, finance } = data;
+  const { habits, prayers, goals, brainDumpCount, finance, tasks } = data;
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -35,7 +35,7 @@ export default function Dashboard() {
 
   return (
     <div className="pb-10 space-y-8 animate-fade-in relative z-0">
-      {/* Greeting Header - Clean & Minimal */}
+      {/* Greeting Header */}
       <div className="flex flex-col md:flex-row items-baseline gap-3 mb-4">
          <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-primary">
             {getGreeting()}, <span className="opacity-60">{user?.username || 'Simian'}</span>
@@ -45,47 +45,113 @@ export default function Dashboard() {
          </div>
       </div>
 
-      {/* Prayers Section - Soft Horizontal Scroll or Grid */}
-      <section className="glass-panel rounded-3xl p-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-wellness-blue/50 rounded-full blur-3xl -z-10" />
-        <div className="flex items-center justify-between mb-6">
-             <h2 className="text-xl font-bold flex items-center gap-3 text-primary">
-                Prayer Schedule
-            </h2>
-            <Link to="/prayer" className="text-sm font-medium text-muted hover:text-primary transition-colors">View Calendar</Link>
-        </div>
-       
-        <div className="grid grid-cols-5 gap-3 md:gap-6">
-        {[
-            { name: 'Fajr', icon: 'Sunrise' },
-            { name: 'Dhuhr', icon: 'Sun' },
-            { name: 'Asr', icon: 'Cloud' },
-            { name: 'Maghrib', icon: 'Sunset' },
-            { name: 'Isha', icon: 'Moon' }
-        ].map(p => {
-            const prayerRecord = prayers.find(pr => pr.name === p.name);
-            const status = prayerRecord?.status || 'pending';
-            
-            let statusClasses = 'bg-white/40 border border-white/20 text-muted hover:bg-white/60';
-            if (status === 'on-time') statusClasses = 'bg-gradient-to-br from-wellness-mint to-teal-50 border border-teal-100 text-teal-800 shadow-sm';
-            if (status === 'missed') statusClasses = 'bg-wellness-rose/50 border border-red-100 text-red-400 border-dashed';
-            
-            return (
-            <div key={p.name} className={`flex flex-col items-center justify-center py-4 rounded-2xl transition-all duration-300 group cursor-default ${statusClasses}`}>
-                 {p.icon === 'Sunrise' && <div className="mb-2"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v8"/><path d="m4.93 10.93 1.41 1.41"/><path d="M2 18h2"/><path d="M20 18h2"/><path d="m19.07 10.93-1.41 1.41"/><path d="M22 22H2"/><path d="m8 6 4-4 4 4"/><path d="M16 18a4 4 0 0 0-8 0"/></svg></div>}
-                 {p.icon === 'Sun' && <div className="mb-2"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41-1.41"/><path d="m19.07 4.93 1.41 1.41"/></svg></div>}
-                 {p.icon === 'Cloud' && <div className="mb-2"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.5 19c0-1.7-1.3-3-3-3"/><path d="M13 16c0-2.8-2.2-5-5-5"/><path d="M5 19c0-4.4 3.6-8 8-8"/><path d="M19 19H5a3 3 0 0 1 0-6h.1a6.83 6.83 0 0 1 12.8 2.3"/></svg></div>}
-                 {p.icon === 'Sunset' && <div className="mb-2"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 10V2"/><path d="m4.93 10.93 1.41 1.41"/><path d="M2 18h2"/><path d="M20 18h2"/><path d="m19.07 10.93-1.41 1.41"/><path d="M22 22H2"/><path d="m16 6-4 4-4-4"/><path d="M16 18a4 4 0 0 0-8 0"/></svg></div>}
-                 {p.icon === 'Moon' && <div className="mb-2"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg></div>}
+      {/* Today's Overview Section - Detailed Cards */}
+      <section>
+          <div className="flex items-center gap-2 mb-4">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+              <h2 className="text-sm font-bold uppercase tracking-wider text-muted">Today's Snapshot</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              
+              {/* Habits: Consistency Score & Progress */}
+              <div className="card p-5 flex flex-col justify-between hover:scale-[1.02] transition-transform relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-wellness-green/10 rounded-full blur-2xl -mr-6 -mt-6" />
+                  <div className="flex justify-between items-start mb-4">
+                      <div className="flex flex-col">
+                        <span className="text-xs font-bold uppercase tracking-wider text-muted mb-1">Consistency</span>
+                        <span className="text-3xl font-display font-bold text-gray-800">
+                             {habits.length > 0 ? Math.round((habits.filter(h => h.completedToday).length / habits.length) * 100) : 0}%
+                        </span>
+                      </div>
+                      <div className="p-2 bg-green-50 text-green-600 rounded-lg"><Activity size={20} /></div>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-1.5 mb-2 overflow-hidden">
+                      <div className="bg-green-500 h-full rounded-full transition-all duration-1000" style={{ width: `${habits.length > 0 ? (habits.filter(h => h.completedToday).length / habits.length) * 100 : 0}%` }}></div>
+                  </div>
+                  <div className="text-xs text-muted font-medium flex justify-between">
+                      <span>{habits.filter(h => h.completedToday).length} completed</span>
+                      <span>{habits.length} total</span>
+                  </div>
+              </div>
 
-                <span className="font-bold text-xs md:text-sm">{p.name}</span>
-                <span className={`text-[10px] uppercase tracking-wider font-semibold hidden md:block mt-1 ${status === 'pending' ? 'text-gray-400' : 'text-current opacity-80'}`}>
-                    {status === 'on-time' ? 'Done' : status}
-                </span>
-            </div>
-            );
-        })}
-        </div>
+              {/* Prayers: Visual Status Dots */}
+              <div className="card p-5 flex flex-col justify-between hover:scale-[1.02] transition-transform relative overflow-hidden">
+                   <div className="absolute top-0 right-0 w-24 h-24 bg-wellness-blue/10 rounded-full blur-2xl -mr-6 -mt-6" />
+                  <div className="flex justify-between items-start mb-4">
+                       <div className="flex flex-col">
+                        <span className="text-xs font-bold uppercase tracking-wider text-muted mb-1">Prayers</span>
+                        <span className="text-3xl font-display font-bold text-gray-800">
+                             {prayers.filter(p => p.status === 'on-time').length}<span className="text-lg text-gray-400 font-medium">/5</span>
+                        </span>
+                      </div>
+                      <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><Zap size={20} /></div>
+                  </div>
+                  <div className="flex justify-between items-center mt-1">
+                      {['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'].map((pName) => {
+                          const p = prayers.find(pr => pr.name === pName);
+                          const status = p?.status || 'pending';
+                          let colorClass = 'bg-gray-200 border-gray-300'; // pending
+                          if (status === 'on-time') colorClass = 'bg-emerald-400 border-emerald-500 shadow-[0_0_8px_rgba(52,211,153,0.5)]';
+                          if (status === 'missed') colorClass = 'bg-rose-400 border-rose-500';
+                          
+                          return (
+                              <div key={pName} className="flex flex-col items-center gap-1 group/p relative">
+                                  <div className={`w-3 h-3 rounded-full border ${colorClass} transition-all`} />
+                                  <span className="text-[9px] font-bold text-muted uppercase opacity-60">{pName.substring(0,1)}</span>
+                                   {/* Tooltip */}
+                                  <div className="absolute bottom-full mb-2 hidden group-hover/p:block bg-gray-800 text-white text-[10px] font-bold px-2 py-1 rounded whitespace-nowrap z-10">
+                                      {pName}: {status}
+                                  </div>
+                              </div>
+                          )
+                      })}
+                  </div>
+              </div>
+
+              {/* Tasks: Upcoming List + Done Count */}
+              <div className="card p-5 flex flex-col justify-between hover:scale-[1.02] transition-transform relative overflow-hidden">
+                   <div className="absolute top-0 right-0 w-24 h-24 bg-wellness-lavender/10 rounded-full blur-2xl -mr-6 -mt-6" />
+                  <div className="flex justify-between items-start mb-2">
+                       <div className="flex flex-col">
+                        <span className="text-xs font-bold uppercase tracking-wider text-muted mb-1">Tasks</span>
+                        <div className="flex items-baseline gap-2">
+                             <span className="text-3xl font-display font-bold text-gray-800">{tasks?.doneCount || 0}</span>
+                             <span className="text-xs font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">Done</span>
+                        </div>
+                      </div>
+                      <div className="p-2 bg-purple-50 text-purple-600 rounded-lg"><CheckCircle size={20} /></div>
+                  </div>
+                  <div className="space-y-2 mt-2">
+                      {tasks?.upcoming && tasks.upcoming.length > 0 ? (
+                          tasks.upcoming.slice(0, 2).map(t => (
+                              <div key={t._id} className="flex items-center gap-2 text-xs font-medium text-gray-600 bg-gray-50 p-2 rounded-lg border border-gray-100">
+                                  <div className={`w-1.5 h-1.5 rounded-full ${t.priority === 'high' ? 'bg-red-400' : 'bg-blue-400'}`} />
+                                  <span className="truncate">{t.title}</span>
+                              </div>
+                          ))
+                      ) : (
+                          <div className="text-xs text-muted italic p-2">No upcoming tasks today</div>
+                      )}
+                      {tasks?.upcoming?.length > 2 && <div className="text-[10px] text-center text-muted">+{tasks.upcoming.length - 2} more</div>}
+                  </div>
+              </div>
+
+              {/* Finance: Today vs Month */}
+              <div className="card p-5 flex flex-col justify-between hover:scale-[1.02] transition-transform border-red-50 hover:border-red-100 relative overflow-hidden">
+                   <div className="absolute top-0 right-0 w-24 h-24 bg-red-50 rounded-full blur-2xl -mr-6 -mt-6 opacity-60" />
+                  <div className="flex justify-between items-start mb-4">
+                      <div className="flex flex-col">
+                        <span className="text-xs font-bold uppercase tracking-wider text-muted mb-1">Spent Today</span>
+                        <span className="text-3xl font-display font-bold text-gray-800">₹{finance.todayExpense || 0}</span>
+                      </div>
+                      <div className="p-2 bg-red-50 text-red-500 rounded-lg"><DollarSign size={20} /></div>
+                  </div>
+                   <div className="flex items-center justify-between mt-2 pt-3 border-t border-gray-100">
+                       <span className="text-xs font-medium text-muted">Total Monthly</span>
+                       <span className="text-xs font-bold text-primary">₹{finance.expense}</span>
+                   </div>
+              </div>
+          </div>
       </section>
 
       {/* Overall Analytics */}
