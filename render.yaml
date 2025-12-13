@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: forge
+    env: node
+    buildCommand: cd server && npm install && npm run build
+    startCommand: cd server && npm start
+    branch: main
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+    # These placeholders remind the user to set them in the dashboard
+    # - key: MONGO_URI
+    #   sync: false
+    # - key: JWT_SECRET
+    #   sync: false
