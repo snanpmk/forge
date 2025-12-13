@@ -1,0 +1,30 @@
+const mongoose = require('mongoose');
+
+const BrainDumpSchema = new mongoose.Schema({
+  content: {
+    type: String,
+    required: true,
+  },
+  type: {
+    type: String,
+    enum: ['idea', 'task', 'note'],
+    default: 'note',
+  },
+  processed: {
+    type: Boolean,
+    default: false,
+  },
+  converted_to: {
+    id: { type: mongoose.Schema.Types.ObjectId },
+    type: { type: String, enum: ['Goal', 'Task', 'Habit'] }
+  },
+  created_at: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
+// Index for dashboard count
+BrainDumpSchema.index({ processed: 1 });
+
+module.exports = mongoose.model('BrainDump', BrainDumpSchema);

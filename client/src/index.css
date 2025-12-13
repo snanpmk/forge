@@ -1,0 +1,50 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-primary font-sans antialiased;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 rounded-full hover:bg-gray-400 transition-colors;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-6 py-3 bg-primary text-white rounded-2xl hover:bg-gray-800 hover:shadow-lg active:scale-95 transition-all duration-200 font-semibold tracking-wide shadow-md flex items-center justify-center gap-2 text-sm;
+  }
+  
+  .card {
+     @apply bg-surface rounded-3xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300;
+  }
+  
+  .input-field {
+    @apply w-full bg-white border border-gray-200 rounded-2xl px-5 py-3 focus:bg-white focus:border-gray-400 focus:ring-4 focus:ring-gray-50 outline-none transition-all duration-200 text-primary placeholder:text-gray-400 text-sm font-medium;
+  }
+
+  /* Animation Utilities */
+  .animate-fade-in {
+    animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  
+  .glass-panel {
+    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-xl;
+  }
+}

@@ -1,0 +1,165 @@
+import React, { useState, useEffect } from 'react';
+import { Target, Info, Plus } from 'lucide-react';
+
+export default function GoalForm({ initialValues, onSubmit, submitLabel = 'Create Goal' }) {
+    const [goalData, setGoalData] = useState({ 
+        title: '', 
+        description: '',
+        category: 'Personal',
+        priority: 'Medium',
+        target_date: '',
+        smart_criteria: {
+            specific: '',
+            measurable: '',
+            achievable: '',
+            relevant: '',
+            time_bound: ''
+        },
+        ...initialValues // Override defaults if provided
+    });
+
+    useEffect(() => {
+        if (initialValues) {
+            setGoalData(prev => ({ ...prev, ...initialValues }));
+        }
+    }, [initialValues]);
+
+    const updateSmartField = (field, value) => {
+        setGoalData(prev => ({
+            ...prev,
+            smart_criteria: { ...prev.smart_criteria, [field]: value }
+        }));
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (goalData.title.trim()) {
+            onSubmit(goalData);
+        }
+    };
+
+    return (
+        <form 
+            onSubmit={handleSubmit} 
+            className="grid gap-6 pr-2"
+        >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="col-span-full">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Goal Title</label>
+                    <input
+                        type="text"
+                        value={goalData.title}
+                        onChange={(e) => setGoalData({ ...goalData, title: e.target.value })}
+                        placeholder="E.g., Learn Spanish"
+                        className="input-field"
+                        required
+                    />
+                </div>
+            </div>
+            
+            {/* S.M.A.R.T Fields Accordion/Grid */}
+            <div className="bg-blue-50/50 p-4 rounded-lg border border-blue-100 space-y-4">
+                <div className="flex items-center gap-2 text-blue-800 mb-2">
+                        <Info size={16} />
+                        <span className="text-sm font-bold">S.M.A.R.T Framework</span>
+                </div>
+                
+                <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Specific (What?)</label>
+                        <textarea 
+                        value={goalData.smart_criteria.specific}
+                        onChange={(e) => updateSmartField('specific', e.target.value)}
+                        placeholder="What exactly do you want to accomplish?" 
+                        className="input-field min-h-[60px] text-sm"
+                        />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Measurable (How?)</label>
+                            <input 
+                            type="text" 
+                            value={goalData.smart_criteria.measurable}
+                            onChange={(e) => updateSmartField('measurable', e.target.value)}
+                            placeholder="How will you measure success?" 
+                            className="input-field text-sm"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Achievable (Realistic?)</label>
+                            <input 
+                            type="text" 
+                            value={goalData.smart_criteria.achievable}
+                            onChange={(e) => updateSmartField('achievable', e.target.value)}
+                            placeholder="Is it realistic?" 
+                            className="input-field text-sm"
+                            />
+                        </div>
+                </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Relevant (Why?)</label>
+                            <input 
+                            type="text" 
+                            value={goalData.smart_criteria.relevant}
+                            onChange={(e) => updateSmartField('relevant', e.target.value)}
+                            placeholder="Why does this matter?" 
+                            className="input-field text-sm"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Time-bound (When?)</label>
+                            <input 
+                            type="date"
+                            className="input-field text-sm"
+                            value={goalData.target_date} 
+                            onChange={(e) => {
+                                setGoalData({ ...goalData, target_date: e.target.value });
+                                updateSmartField('time_bound', e.target.value); 
+                            }}
+                        />
+                        </div>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <select 
+                    value={goalData.category}
+                    onChange={(e) => setGoalData({ ...goalData, category: e.target.value })}
+                    className="input-field"
+                >
+                    <option value="Personal">Personal</option>
+                    <option value="Career">Career</option>
+                    <option value="Financial">Financial</option>
+                    <option value="Health">Health</option>
+                    <option value="Education">Education</option>
+                </select>
+
+                <select 
+                    value={goalData.priority}
+                    onChange={(e) => setGoalData({ ...goalData, priority: e.target.value })}
+                    className="input-field"
+                >
+                    <option value="Low">Low Priority</option>
+                    <option value="Medium">Medium Priority</option>
+                    <option value="High">High Priority</option>
+                </select>
+
+                <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Budget (₹)</label>
+                    <input 
+                        type="number"
+                        min="0"
+                        placeholder="Allocated Budget"
+                        className="input-field"
+                        value={goalData.budget_allocated || ''}
+                        onChange={(e) => setGoalData({ ...goalData, budget_allocated: Number(e.target.value) })}
+                    />
+                </div>
+                
+                <button type="submit" className="btn-primary w-full flex items-center justify-center gap-2">
+                    <Plus size={18} /> {submitLabel}
+                </button>
+            </div>
+        </form>
+    );
+}
