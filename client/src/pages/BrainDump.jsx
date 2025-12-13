@@ -131,25 +131,25 @@ export default function BrainDump() {
   if (isLoading) return <Loader />;
 
   return (
-    <div className="max-w-3xl mx-auto h-full flex flex-col pb-6">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 bg-black text-white rounded-lg">
-          <Brain size={24} />
+    <div className="max-w-4xl mx-auto h-full flex flex-col pb-6 animate-fade-in">
+      <div className="flex items-center gap-4 mb-8">
+        <div className="p-3 bg-primary text-white rounded-2xl shadow-soft">
+          <Brain size={28} />
         </div>
         <div>
-          <h1 className="text-2xl font-bold">Brain Dump</h1>
-          <p className="text-gray-500 text-sm">Capture ideas now, process later.</p>
+          <h1 className="text-3xl font-bold text-primary tracking-tight">Brain Dump</h1>
+          <p className="text-muted text-sm font-medium">Capture ideas now, process later. Keep your mind clear.</p>
         </div>
       </div>
 
       {/* Input Area */}
-      <form onSubmit={handleSubmit} className="mb-8">
-        <div className="relative">
+      <form onSubmit={handleSubmit} className="mb-10 relative group">
+        <div className="relative z-10">
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="What's on your mind?"
-            className="w-full h-32 p-4 bg-white border border-gray-300 rounded-xl focus:border-black outline-none resize-none shadow-sm text-lg"
+            className="w-full h-40 p-6 bg-white/80 backdrop-blur-sm border-2 border-dashed border-gray-200 rounded-3xl focus:border-primary/20 focus:bg-white outline-none resize-none shadow-soft transition-all text-lg placeholder:text-gray-300"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -157,13 +157,16 @@ export default function BrainDump() {
               }
             }}
           />
-          <div className="absolute bottom-3 right-3 text-xs text-gray-400">
+          <div className="absolute bottom-4 right-4 text-xs font-bold text-muted uppercase tracking-wider opacity-50 group-hover:opacity-100 transition-opacity">
             Press Enter to save
           </div>
         </div>
+        {/* Decorative background blob */}
+        <div className="absolute -top-4 -left-4 w-full h-full bg-gradient-to-r from-wellness-blue/30 to-wellness-lavender/30 rounded-3xl blur-xl -z-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
         <Button 
             type="submit" 
-            className="mt-2 w-full py-3"
+            className="mt-4 w-full py-4 rounded-xl shadow-soft hover:shadow-soft-hover"
             disabled={!content.trim()}
         >
             Capture Thought
@@ -171,28 +174,35 @@ export default function BrainDump() {
       </form>
 
       {/* Items List */}
-      <div className="flex-1 overflow-y-auto space-y-3 pr-2">
+      <div className="flex-1 overflow-y-auto space-y-4 pr-2">
         {items.length === 0 ? (
-          <div className="text-center text-gray-300 py-10 italic">
-            Your mind is clear.
+          <div className="text-center text-gray-300 py-16 flex flex-col items-center">
+            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                <Brain size={32} className="opacity-20" />
+            </div>
+            <p className="italic font-medium">Your mind is clear.</p>
           </div>
         ) : (
-          items.map((item) => (
-            <div key={item._id} className="group bg-white border border-gray-200 p-4 rounded-lg shadow-sm hover:border-gray-400 transition-colors flex justify-between items-start animate-fade-in">
-              <p className="whitespace-pre-wrap text-gray-800 flex-1 mr-4">{item.content}</p>
+          items.map((item, idx) => (
+            <div 
+                key={item._id} 
+                className="group bg-white border border-gray-100 p-5 rounded-2xl shadow-sm hover:shadow-soft hover:border-gray-200 transition-all flex justify-between items-start animate-fade-in"
+                style={{ animationDelay: `${idx * 50}ms` }}
+            >
+              <p className="whitespace-pre-wrap text-primary text-base leading-relaxed flex-1 mr-6">{item.content}</p>
               
-              <div className="flex items-center gap-1 opacity-100 md:opacity-50 md:group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
                  {/* Process Button opens Modal */}
                 <button 
                   onClick={() => openConvertModal(item)}
-                  className="p-1.5 hover:bg-black hover:text-white rounded text-gray-600 transition-colors"
+                  className="p-2 hover:bg-black hover:text-white rounded-xl text-muted transition-colors shadow-sm bg-gray-50 top-action-btn"
                   title="Process / Convert"
                 >
                   <ArrowRight size={18} />
                 </button>
                 <button 
                   onClick={() => deleteMutation.mutate(item._id)}
-                  className="p-1.5 hover:bg-red-50 rounded text-gray-400 hover:text-red-500"
+                  className="p-2 hover:bg-red-50 hover:text-red-500 rounded-xl text-muted transition-colors shadow-sm bg-gray-50"
                   title="Delete"
                 >
                   <Trash2 size={18} />

@@ -18,9 +18,14 @@ export default function GoalForm({ initialValues, onSubmit, submitLabel = 'Creat
         ...initialValues // Override defaults if provided
     });
 
+    const [hasBudget, setHasBudget] = useState(false);
+
     useEffect(() => {
         if (initialValues) {
             setGoalData(prev => ({ ...prev, ...initialValues }));
+            if (initialValues.budget_allocated && initialValues.budget_allocated > 0) {
+                setHasBudget(true);
+            }
         }
     }, [initialValues]);
 
@@ -144,16 +149,33 @@ export default function GoalForm({ initialValues, onSubmit, submitLabel = 'Creat
                     <option value="High">High Priority</option>
                 </select>
 
-                <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Budget (₹)</label>
-                    <input 
-                        type="number"
-                        min="0"
-                        placeholder="Allocated Budget"
-                        className="input-field"
-                        value={goalData.budget_allocated || ''}
-                        onChange={(e) => setGoalData({ ...goalData, budget_allocated: Number(e.target.value) })}
-                    />
+                <div className="flex flex-col gap-2">
+                   <label className="flex items-center gap-2 cursor-pointer group">
+                        <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${hasBudget ? 'bg-primary border-primary' : 'bg-white border-gray-300 group-hover:border-primary'}`}>
+                            {hasBudget && <Plus size={14} className="text-white rotate-45" />} {/* Using Plus rotated as check or close? Actually Check is better. Let's use simple boolean logic */}
+                             <input 
+                                type="checkbox" 
+                                className="hidden" 
+                                checked={hasBudget} 
+                                onChange={(e) => {
+                                    setHasBudget(e.target.checked);
+                                    if (!e.target.checked) setGoalData(prev => ({ ...prev, budget_allocated: 0 }));
+                                }}
+                            />
+                        </div>
+                        <span className="text-xs font-bold text-gray-500 uppercase">Set Budget?</span>
+                   </label>
+                   
+                   {hasBudget && (
+                        <input 
+                            type="number"
+                            min="0"
+                            placeholder="Allocated Amount (₹)"
+                            className="input-field animate-fade-in"
+                            value={goalData.budget_allocated || ''}
+                            onChange={(e) => setGoalData({ ...goalData, budget_allocated: Number(e.target.value) })}
+                        />
+                   )}
                 </div>
                 
                 <button type="submit" className="btn-primary w-full flex items-center justify-center gap-2">

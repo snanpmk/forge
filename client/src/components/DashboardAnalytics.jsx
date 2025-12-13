@@ -27,14 +27,16 @@ export default function DashboardAnalytics() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 gap-2">
-            <div className="flex items-center gap-2">
-                <Activity className="text-black" />
-                <h2 className="text-xl md:text-2xl font-bold">Performance Analysis</h2>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
+            <div className="flex items-center gap-3">
+                <div className="p-2 bg-wellness-indigo rounded-xl text-indigo-700">
+                    <Activity size={18} />
+                </div>
+                <h2 className="text-xl font-bold text-primary">Performance Analysis</h2>
             </div>
             
             {/* Filter Controls */}
-            <div className="flex bg-gray-100 p-1 rounded-lg w-full sm:w-auto">
+            <div className="flex bg-white border border-gray-100 p-1 rounded-xl w-full sm:w-auto shadow-sm">
                 {[
                     { label: 'Weekly', val: 7 }, 
                     { label: 'Monthly', val: 30 }
@@ -43,10 +45,10 @@ export default function DashboardAnalytics() {
                         key={opt.val}
                         onClick={() => setDays(opt.val)}
                         className={clsx(
-                            "flex-1 sm:flex-none px-3 py-1.5 text-xs font-bold rounded-md transition-all text-center",
+                            "flex-1 sm:flex-none px-4 py-2 text-xs font-bold rounded-lg transition-all text-center",
                             days === opt.val 
-                                ? "bg-black text-white shadow-md" 
-                                : "text-gray-500 hover:text-black"
+                                ? "bg-primary text-white shadow-md" 
+                                : "text-muted hover:text-primary hover:bg-gray-50"
                         )}
                     >
                         {opt.label}
@@ -56,59 +58,61 @@ export default function DashboardAnalytics() {
         </div>
 
       {/* Score Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-4">
-        <div className="card bg-black text-white border-none p-3 md:p-4">
-            <div className="flex items-center gap-2 text-gray-400 text-[10px] md:text-xs uppercase tracking-wider mb-1 md:mb-2">
-                <Zap size={14} className="text-gray-400" /> Overall Score
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-6">
+        <div className="card bg-primary text-white border-none p-5 relative overflow-hidden group hover:scale-[1.02] transition-transform">
+             <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-6 -mt-6" />
+            <div className="flex items-center gap-2 text-gray-300 text-xs uppercase tracking-wider mb-2 font-semibold">
+                <Zap size={14} className="text-yellow-400" /> Overall Score
             </div>
-            <div className="text-2xl md:text-3xl font-mono font-bold">{avgOverall}</div>
-            <div className="text-[10px] text-gray-500 mt-1">Avg for last {days} days</div>
+            <div className="text-4xl font-display font-bold">{avgOverall}</div>
+            <div className="text-[10px] text-gray-400 mt-2 font-medium">Avg for last {days} days</div>
         </div>
-        <div className="card p-3 md:p-4">
-             <div className="text-gray-500 text-[10px] md:text-xs uppercase tracking-wider mb-1 md:mb-2">Habit Consistency</div>
-             <div className="text-2xl md:text-3xl font-mono font-bold">{avgHabit}%</div>
+        <div className="card bg-white border-2 border-transparent hover:border-wellness-lavender/50 p-5 group hover:scale-[1.02] transition-all duration-300 shadow-sm hover:shadow-soft">
+             <div className="text-muted text-xs uppercase tracking-wider mb-2 font-semibold">Habit Consistency</div>
+             <div className="text-4xl font-display font-bold text-gray-800">{avgHabit}%</div>
         </div>
-        <div className="card p-3 md:p-4">
-             <div className="text-gray-500 text-[10px] md:text-xs uppercase tracking-wider mb-1 md:mb-2">Prayer On-Time</div>
-             <div className="text-2xl md:text-3xl font-mono font-bold">{avgPrayer}%</div>
+        <div className="card bg-white border-2 border-transparent hover:border-wellness-blue/50 p-5 group hover:scale-[1.02] transition-all duration-300 shadow-sm hover:shadow-soft">
+             <div className="text-muted text-xs uppercase tracking-wider mb-2 font-semibold">Prayer On-Time</div>
+             <div className="text-4xl font-display font-bold text-gray-800">{avgPrayer}%</div>
         </div>
       </div>
 
       {/* Main Chart */}
-      <div className="card h-64 sm:h-80 flex flex-col">
-        <h3 className="font-bold text-lg mb-4">{days === 7 ? 'Weekly' : 'Monthly'} Trend</h3>
+      <div className="card h-72 sm:h-96 flex flex-col p-6 border border-gray-100 shadow-soft">
+        <h3 className="font-bold text-lg mb-6 text-primary">{days === 7 ? 'Weekly' : 'Monthly'} Trend</h3>
         <div className="flex-1 w-full min-h-0">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={trends} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+            <AreaChart data={trends} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorOverall" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#000000" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#000000" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#1f2937" stopOpacity={0.2}/>
+                  <stop offset="95%" stopColor="#1f2937" stopOpacity={0}/>
                 </linearGradient>
                 <linearGradient id="colorHabit" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#6b7280" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#6b7280" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#a78bfa" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#a78bfa" stopOpacity={0}/>
                 </linearGradient>
                 <linearGradient id="colorPrayer" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#d1d5db" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#d1d5db" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#2dd4bf" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#2dd4bf" stopOpacity={0}/>
                 </linearGradient>
               </defs>
-              <XAxis dataKey="date" fontSize={12} tickLine={false} axisLine={false} tickMargin={10} />
-              <YAxis fontSize={12} tickLine={false} axisLine={false} domain={[0, 100]} />
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+              <XAxis dataKey="date" fontSize={11} tickLine={false} axisLine={false} tickMargin={15} stroke="#9ca3af" />
+              <YAxis fontSize={11} tickLine={false} axisLine={false} domain={[0, 100]} stroke="#9ca3af" />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
               <Tooltip 
+                cursor={{ stroke: '#e2e8f0', strokeWidth: 1 }}
                 content={({ active, payload, label }) => {
                     if (active && payload && payload.length) {
                     return (
-                        <div className="bg-white p-3 border border-gray-100 shadow-xl rounded-xl">
-                        <p className="font-bold text-sm mb-2">{label}</p>
-                        <div className="space-y-1">
+                        <div className="bg-white/90 backdrop-blur-md p-4 border border-white/50 shadow-xl rounded-2xl">
+                        <p className="font-bold text-sm mb-3 text-primary">{label}</p>
+                        <div className="space-y-2">
                             {payload.map((entry, index) => (
-                            <div key={index} className="flex items-center gap-2 text-xs">
-                                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.stroke }}></span>
-                                <span className="text-gray-500 capitalize">{entry.name}:</span>
-                                <span className="font-mono font-bold">{entry.value}%</span>
+                            <div key={index} className="flex items-center gap-3 text-xs font-medium">
+                                <span className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: entry.stroke }}></span>
+                                <span className="text-gray-500 capitalize min-w-[60px]">{entry.name}:</span>
+                                <span className="font-bold text-primary">{entry.value}%</span>
                             </div>
                             ))}
                         </div>
@@ -118,12 +122,12 @@ export default function DashboardAnalytics() {
                     return null;
                 }}
               />
-              <Legend verticalAlign="top" height={36} iconType="circle" />
+              <Legend verticalAlign="top" height={36} iconType="circle" wrapperStyle={{ paddingBottom: '20px', fontSize: '12px', fontWeight: 600 }} />
               <Area 
                 type="monotone" 
                 dataKey="overallScore" 
                 name="Overall" 
-                stroke="#000000" 
+                stroke="#1f2937" 
                 strokeWidth={3}
                 fillOpacity={1} 
                 fill="url(#colorOverall)" 
@@ -132,7 +136,7 @@ export default function DashboardAnalytics() {
                 type="monotone" 
                 dataKey="habitScore" 
                 name="Habits" 
-                stroke="#6b7280" 
+                stroke="#a78bfa" 
                 strokeWidth={2}
                 fillOpacity={1}
                 fill="url(#colorHabit)" 
@@ -141,7 +145,7 @@ export default function DashboardAnalytics() {
                 type="monotone" 
                 dataKey="prayerScore" 
                 name="Prayers" 
-                stroke="#d1d5db" 
+                stroke="#2dd4bf" 
                 strokeWidth={2}
                 fillOpacity={1}
                 fill="url(#colorPrayer)" 
