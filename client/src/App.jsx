@@ -12,6 +12,8 @@ import Finance from './pages/Finance';
 import TaskManager from './pages/TaskManager';
 import PrayerTracker from './pages/PrayerTracker';
 import Login from './pages/Login';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 const queryClient = new QueryClient();
@@ -45,6 +47,8 @@ export default function App() {
                     <Route path="dump" element={<BrainDump />} />
                     <Route path="finance" element={<Finance />} />
                     <Route path="prayer" element={<PrayerTracker />} />
+                    <Route path="privacy" element={<PrivacyPolicy />} />
+                    <Route path="terms" element={<TermsOfService />} />
                   </Route>
               </Route>
             </Routes>

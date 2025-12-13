@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, CheckSquare, Target, Brain, DollarSign, Sun, X, Calendar } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, Target, Brain, DollarSign, Sun, X, Calendar, Shield, FileText } from 'lucide-react';
 import clsx from 'clsx';
 import UserLevel from './UserLevel';
 
@@ -71,6 +71,10 @@ export default function Sidebar({ isOpen, onClose }) {
           <NavItem to="/goals" icon={Target} label="Goals" onClick={onClose} />
           <NavItem to="/dump" icon={Brain} label="Dump" onClick={onClose} />
           <NavItem to="/finance" icon={DollarSign} label="Finance" onClick={onClose} />
+          <NavItem to="/finance" icon={DollarSign} label="Finance" onClick={onClose} />
+          <div className="border-t border-gray-200 my-2 pt-2 w-10 mx-auto"></div>
+          <NavItem to="/privacy" icon={Shield} label="Privacy" onClick={onClose} />
+          <NavItem to="/terms" icon={FileText} label="Terms" onClick={onClose} />
         </div>
 
         {/* User Level Display */}
