@@ -9,6 +9,9 @@ import Button from '../components/ui/Button';
 import TaskForm from '../components/TaskForm';
 import HabitForm from '../components/HabitForm';
 
+import { useRef } from 'react';
+import { toast } from 'react-hot-toast';
+
 export default function TaskManager() {
   const queryClient = useQueryClient();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -51,7 +54,7 @@ export default function TaskManager() {
           queryClient.invalidateQueries(['dashboard']);
           setIsHabitModalOpen(false);
           setTaskToConvert(null);
-          alert('Habit created from task!');
+          toast.success('Habit created from task!');
       }
   });
 

@@ -12,6 +12,8 @@ const QUOTES = [
     { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" }
 ];
 
+import { toast } from 'react-hot-toast';
+
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -27,7 +29,7 @@ export default function Login() {
     if (result.success) {
       navigate('/');
     } else {
-        alert('Login Failed');
+        toast.error('Login Failed');
     }
   };
 
