@@ -8,6 +8,7 @@ import GoalForm from '../components/GoalForm';
 import HabitForm from '../components/HabitForm';
 import toast from 'react-hot-toast';
 import SkeletonBrainDump from '../components/skeletons/SkeletonBrainDump';
+import { confirmAction } from '../components/ui/ConfirmationToast';
 
 export default function BrainDump() {
   const queryClient = useQueryClient();
@@ -201,8 +202,9 @@ export default function BrainDump() {
                   <ArrowRight size={18} />
                 </button>
                 <button 
-                  onClick={() => deleteMutation.mutate(item._id)}
-                  className="p-2 hover:bg-red-50 hover:text-red-500 rounded-xl text-muted transition-colors shadow-sm bg-gray-50"
+                  onClick={() => confirmAction('Delete this thought?', () => deleteMutation.mutate(item._id))}
+                  disabled={deleteMutation.isLoading || deleteMutation.isPending}
+                  className="p-2 hover:bg-red-50 hover:text-red-500 rounded-xl text-muted transition-colors shadow-sm bg-gray-50 disabled:opacity-50"
                   title="Delete"
                 >
                   <Trash2 size={18} />

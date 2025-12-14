@@ -50,6 +50,10 @@ const TaskSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  subtasks: [{
+    title: { type: String, required: true },
+    completed: { type: Boolean, default: false }
+  }]
 });
 
 // Index for efficient sorting and querying

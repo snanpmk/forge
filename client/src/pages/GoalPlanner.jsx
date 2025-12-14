@@ -14,6 +14,8 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
 import SkeletonGoalPlanner from '../components/skeletons/SkeletonGoalPlanner';
+import { confirmAction } from '../components/ui/ConfirmationToast';
+import toast from 'react-hot-toast';
 
 export default function GoalPlanner() {
   const queryClient = useQueryClient();
@@ -75,6 +77,7 @@ export default function GoalPlanner() {
     onSuccess: () => {
       queryClient.invalidateQueries(['goals']);
       queryClient.invalidateQueries(['dashboard']);
+      toast.success('Goal deleted');
     },
   });
 
@@ -255,9 +258,10 @@ export default function GoalPlanner() {
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
-                            if(confirm('Delete goal?')) deleteGoalMutation.mutate(goal._id);
+                            confirmAction('Delete this goal?', () => deleteGoalMutation.mutate(goal._id));
                           }}
-                          className="text-gray-300 hover:text-red-500 p-2.5 rounded-xl hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
+                          disabled={deleteGoalMutation.isLoading || deleteGoalMutation.isPending}
+                          className="text-gray-300 hover:text-red-500 p-2.5 rounded-xl hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50"
                         >
                           <Trash2 size={18} />
                         </button>

@@ -1,16 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
-import { Plus, Calendar, Clock, AlertCircle, CheckCircle2, Circle, Trash2, Zap, Pencil } from 'lucide-react';
-import { format, isToday, isPast, isTomorrow, addDays, parseISO } from 'date-fns';
-import clsx from 'clsx';
 import Modal from '../components/ui/Modal';
-import Button from '../components/ui/Button';
 import TaskForm from '../components/TaskForm';
+import { Trash2,Clock, Plus, Calendar, CheckCircle2, AlertCircle, RefreshCw, Filter, ArrowUpDown, Pencil, Zap } from 'lucide-react';
+import { format, isToday, isTomorrow, isPast, parseISO, addDays, startOfToday, isValid } from 'date-fns';
+import { confirmAction } from '../components/ui/ConfirmationToast';
+import clsx from 'clsx';
+import Button from '../components/ui/Button';
 import HabitForm from '../components/HabitForm';
 import SkeletonTaskManager from '../components/skeletons/SkeletonTaskManager';
-
-import { useRef } from 'react';
 import { toast } from 'react-hot-toast';
 
 export default function TaskManager() {
@@ -18,10 +17,12 @@ export default function TaskManager() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState(null);
+  const [sortBy, setSortBy] = useState('date'); // 'date' | 'priority' | 'newest'
 
   // Details Modal
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
+  const [newSubtask, setNewSubtask] = useState(''); // State for new subtask input
   
   // Habit Conversion
   const [isHabitModalOpen, setIsHabitModalOpen] = useState(false);
@@ -92,6 +93,7 @@ export default function TaskManager() {
     mutationFn: async (id) => api.delete(`/tasks/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries(['tasks']);
+      toast.success('Task deleted');
     },
   });
 
@@ -101,6 +103,20 @@ export default function TaskManager() {
       today: [],
       upcoming: [],
       completed: []
+  };
+
+  const getSortedTasks = (taskList) => {
+      return [...taskList].sort((a, b) => {
+          if (sortBy === 'priority') {
+              const priorityOrder = { high: 3, medium: 2, low: 1 };
+              return (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);
+          } else if (sortBy === 'newest') {
+              return new Date(b.createdAt || b._id.getTimestamp?.() || 0) - new Date(a.createdAt || a._id.getTimestamp?.() || 0); // Fallback if createdAt missing
+          } else {
+              // Default: date (due date)
+              return new Date(a.due_date) - new Date(b.due_date);
+          }
+      });
   };
 
   tasks?.forEach(task => {
@@ -114,6 +130,11 @@ export default function TaskManager() {
       } else {
           groupedTasks.upcoming.push(task);
       }
+  });
+
+  // Apply sorting to all groups
+  Object.keys(groupedTasks).forEach(key => {
+      groupedTasks[key] = getSortedTasks(groupedTasks[key]);
   });
 
   console.log(groupedTasks);
@@ -134,12 +155,30 @@ export default function TaskManager() {
             </h1>
             <p className="text-gray-500 mt-1 text-sm sm:text-base">Manage your scheduled tasks and to-dos.</p>
         </div>
-        <button 
-            onClick={() => setIsAddModalOpen(true)}
-            className="bg-black text-white px-4 py-2 rounded-xl hover:scale-105 transition-all shadow-lg shadow-black/20 flex items-center gap-2 font-medium w-full sm:w-auto justify-center"
-        >
-            <Plus size={20} /> New Task
-        </button>
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+             {/* Sort Select */}
+            <div className="relative">
+                <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="appearance-none bg-white border border-gray-200 text-gray-700 py-2 pl-3 pr-8 rounded-xl leading-tight focus:outline-none focus:border-black text-sm font-bold h-full shadow-sm cursor-pointer hover:bg-gray-50 transition-colors w-full sm:w-auto"
+                >
+                    <option value="date">Sort by Date</option>
+                    <option value="priority">Sort by Priority</option>
+                    <option value="newest">Sort by Newest</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                    <ArrowUpDown size={14} />
+                </div>
+            </div>
+
+            <button 
+                onClick={() => setIsAddModalOpen(true)}
+                className="bg-black text-white px-4 py-2 rounded-xl hover:scale-105 transition-all shadow-lg shadow-black/20 flex items-center gap-2 font-medium justify-center"
+            >
+                <Plus size={20} /> New Task
+            </button>
+        </div>
       </div>
 
       {/* Task Sections */}
@@ -327,6 +366,110 @@ export default function TaskManager() {
                       {selectedTask.description || <span className="text-gray-400 italic">No description provided.</span>}
                   </div>
 
+                  {/* Subtasks Section */}
+                  <div>
+                    <h3 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
+                        Subtasks 
+                        <span className="text-xs font-normal text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                            {selectedTask.subtasks?.filter(s => s.completed).length || 0}/{(selectedTask.subtasks?.length || 0)}
+                        </span>
+                    </h3>
+                    
+                    {/* Add Subtask Input */}
+                    <div className="flex gap-2 mb-3">
+                        <input 
+                            type="text" 
+                            placeholder="Add a subtask..." 
+                            value={newSubtask}
+                            onChange={(e) => setNewSubtask(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && newSubtask.trim()) {
+                                    const updatedSubtasks = [...(selectedTask.subtasks || []), { title: newSubtask, completed: false }];
+                                    editMutation.mutate({ 
+                                        id: selectedTask._id, 
+                                        data: { ...selectedTask, subtasks: updatedSubtasks } 
+                                    }, {
+                                        onSuccess: () => {
+                                            setSelectedTask(prev => ({ ...prev, subtasks: updatedSubtasks }));
+                                            setNewSubtask('');
+                                        }
+                                    });
+                                }
+                            }}
+                            className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-black transition-colors"
+                        />
+                        <button 
+                            onClick={() => {
+                                if (newSubtask.trim()) {
+                                    const updatedSubtasks = [...(selectedTask.subtasks || []), { title: newSubtask, completed: false }];
+                                    editMutation.mutate({ 
+                                        id: selectedTask._id, 
+                                        data: { ...selectedTask, subtasks: updatedSubtasks } 
+                                    }, {
+                                        onSuccess: () => {
+                                            setSelectedTask(prev => ({ ...prev, subtasks: updatedSubtasks }));
+                                            setNewSubtask('');
+                                        }
+                                    });
+                                }
+                            }}
+                            className="bg-black text-white p-2 rounded-lg hover:bg-gray-800 transition-colors"
+                        >
+                            <Plus size={18} />
+                        </button>
+                    </div>
+
+                    {/* Subtasks List */}
+                    <div className="space-y-2">
+                        {selectedTask.subtasks && selectedTask.subtasks.length > 0 ? (
+                            selectedTask.subtasks.map((subtask, index) => (
+                                <div key={index} className="flex items-center gap-3 group">
+                                    <button 
+                                        onClick={() => {
+                                            const updatedSubtasks = [...selectedTask.subtasks];
+                                            updatedSubtasks[index].completed = !updatedSubtasks[index].completed;
+                                            editMutation.mutate({ 
+                                                id: selectedTask._id, 
+                                                data: { ...selectedTask, subtasks: updatedSubtasks } 
+                                            }, {
+                                                onSuccess: () => setSelectedTask(prev => ({ ...prev, subtasks: updatedSubtasks }))
+                                            });
+                                        }}
+                                        className={clsx(
+                                            "w-5 h-5 rounded border flex items-center justify-center transition-all",
+                                            subtask.completed ? "bg-black border-black text-white" : "border-gray-300 hover:border-black"
+                                        )}
+                                    >
+                                        {subtask.completed && <CheckCircle2 size={12} />}
+                                    </button>
+                                    <span className={clsx(
+                                        "flex-1 text-sm transition-all",
+                                        subtask.completed ? "text-gray-400 line-through" : "text-gray-700"
+                                    )}>
+                                        {subtask.title}
+                                    </span>
+                                    <button 
+                                        onClick={() => {
+                                            const updatedSubtasks = selectedTask.subtasks.filter((_, i) => i !== index);
+                                            editMutation.mutate({ 
+                                                id: selectedTask._id, 
+                                                data: { ...selectedTask, subtasks: updatedSubtasks } 
+                                            }, {
+                                                onSuccess: () => setSelectedTask(prev => ({ ...prev, subtasks: updatedSubtasks }))
+                                            });
+                                        }}
+                                        className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-500 transition-all p-1"
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
+                                </div>
+                            ))
+                        ) : (
+                            <p className="text-sm text-gray-400 italic">No subtasks yet.</p>
+                        )}
+                    </div>
+                  </div>
+
                   <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
                       <Button 
                         variant="outline" 
@@ -424,8 +567,12 @@ function TaskItem({ task, toggle, remove, onConvert, onEdit, onClick }) {
                     <Zap size={16} />
                 </button>
                 <button 
-                    onClick={() => remove.mutate(task._id)}
-                    className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        confirmAction('Delete this task?', () => remove.mutate(task._id));
+                    }}
+                    disabled={remove.isLoading || remove.isPending}
+                    className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <Trash2 size={16} />
                 </button>

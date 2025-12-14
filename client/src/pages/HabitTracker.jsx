@@ -1,9 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
-import { Check, Plus, Trash2, Zap, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Flame,Zap, Calendar as CalIcon, ChevronLeft, ChevronRight, Check, Trash2 } from 'lucide-react';
 import clsx from 'clsx';
+import toast from 'react-hot-toast';
 import SkeletonHabitTracker from '../components/skeletons/SkeletonHabitTracker';
+import { confirmAction } from '../components/ui/ConfirmationToast';
 import { 
   startOfMonth, endOfMonth, eachDayOfInterval, format, isSameDay, isToday, 
   startOfWeek, endOfWeek, addMonths, subMonths, addWeeks, subWeeks,
@@ -79,6 +81,7 @@ export default function HabitTracker() {
     mutationFn: async (id) => api.delete(`/habits/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries(['habits']);
+      toast.success('Habit deleted');
     },
   });
 
@@ -216,10 +219,11 @@ export default function HabitTracker() {
                               <button 
                                   onClick={(e) => { 
                                       e.stopPropagation();
-                                      if(confirm('Delete?')) deleteMutation.mutate(habit._id); 
+                                      confirmAction('Delete this habit?', () => deleteMutation.mutate(habit._id));
                                   }}
+                                  disabled={deleteMutation.isLoading || deleteMutation.isPending}
                                   className={clsx(
-                                      "absolute top-3 right-3 p-2 rounded-xl opacity-0 group-hover:opacity-100 transition-all z-20",
+                                      "absolute top-3 right-3 p-2 rounded-xl opacity-0 group-hover:opacity-100 transition-all z-20 disabled:opacity-50",
                                       completed ? "hover:bg-green-200/50 text-green-700/50 hover:text-green-800" : "hover:bg-red-50 text-gray-300 hover:text-red-500"
                                   )}
                               >
@@ -314,8 +318,9 @@ export default function HabitTracker() {
                                 </td>
                                 <td className="p-4 text-center">
                                     <button 
-                                        onClick={() => { if(confirm('Delete?')) deleteMutation.mutate(habit._id); }}
-                                        className="p-2 rounded-xl text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
+                                        onClick={() => confirmAction('Delete this habit?', () => deleteMutation.mutate(habit._id))}
+                                        disabled={deleteMutation.isLoading || deleteMutation.isPending}
+                                        className="p-2 rounded-xl text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50"
                                     >
                                         <Trash2 size={16} />
                                     </button>

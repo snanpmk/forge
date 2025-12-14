@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import FinanceAnalytics from '../components/FinanceAnalytics';
 
 import SkeletonFinance from '../components/skeletons/SkeletonFinance';
+import { confirmAction } from '../components/ui/ConfirmationToast';
 
 const TRANSACTION_TYPES = [
   { id: 'income', label: 'Income', icon: TrendingUp },
@@ -426,8 +427,9 @@ export default function Finance() {
                         {isPositive ? '+' : '-'}₹{t.amount.toLocaleString('en-IN')}
                       </span>
                       <button 
-                        onClick={() => deleteTransactionMutation.mutate(t._id)}
-                        className="opacity-0 group-hover:opacity-100 p-2 text-gray-300 hover:text-red-500 transition-all hover:bg-red-50 rounded-lg transform scale-90 active:scale-95"
+                        onClick={() => confirmAction('Delete this transaction?', () => deleteTransactionMutation.mutate(t._id))}
+                        disabled={deleteTransactionMutation.isLoading || deleteTransactionMutation.isPending}
+                        className="opacity-0 group-hover:opacity-100 p-2 text-gray-300 hover:text-red-500 transition-all hover:bg-red-50 rounded-lg transform scale-90 active:scale-95 disabled:opacity-50"
                         title="Delete"
                       >
                         <Trash2 size={18} />
