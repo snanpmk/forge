@@ -86,10 +86,15 @@ router.put('/:id', async (req, res) => {
       const total = goal.milestones.length;
       goal.progress = total === 0 ? 0 : Math.round((completed / total) * 100);
       
-      // Auto-update status if 100% (optional, but requested implicitly)
+      // Auto-update status if 100%
       if (goal.progress === 100 && goal.status !== 'Completed') {
           goal.status = 'Completed';
           goal.completed_at = new Date();
+      }
+      // Revert status if < 100% and currently Completed
+      else if (goal.progress < 100 && goal.status === 'Completed') {
+          goal.status = 'Active';
+          goal.completed_at = null;
       }
       
       await goal.save();
