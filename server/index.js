@@ -11,6 +11,9 @@ const PORT = process.env.PORT || 5000;
 // Connect to Database
 connectDB();
 
+// Cron Job
+require('./cron');
+
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -18,6 +21,10 @@ app.use(express.json());
 
 
 // Routes
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
+
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/habits', require('./routes/habits'));
