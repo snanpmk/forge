@@ -45,6 +45,7 @@ const FinanceSchema = new mongoose.Schema({
 });
 
 // Indexes
+FinanceSchema.index({ user: 1 });
 FinanceSchema.index({ date: 1 });
 FinanceSchema.index({ type: 1 });
 

@@ -8,6 +8,7 @@ import Modal from '../components/ui/Modal';
 import Button from '../components/ui/Button';
 import TaskForm from '../components/TaskForm';
 import HabitForm from '../components/HabitForm';
+import SkeletonTaskManager from '../components/skeletons/SkeletonTaskManager';
 
 import { useRef } from 'react';
 import { toast } from 'react-hot-toast';
@@ -97,7 +98,7 @@ export default function TaskManager() {
 
   console.log(groupedTasks);
 
-  if (isLoading) return <div className="p-10 text-center text-gray-400">Loading tasks...</div>;
+  if (isLoading) return <SkeletonTaskManager />;
 
   return (
     <div className="max-w-4xl mx-auto pb-10 ">

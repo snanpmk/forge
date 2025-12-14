@@ -9,7 +9,7 @@ import {
 } from 'date-fns';
 import clsx from 'clsx';
 import { useMediaQuery } from '../hooks/useMediaQuery';
-import Loader from '../components/Loader';
+import SkeletonPrayerTracker from '../components/skeletons/SkeletonPrayerTracker';
 
 const PRAYERS = [
   { name: 'Fajr', icon: Sunrise },
@@ -104,7 +104,7 @@ export default function PrayerTracker() {
       statusMutation.mutate({ name: activePrayer.name, status, date: currentDate, type });
   };
 
-  if (isLoading) return <Loader />;
+  if (isLoading) return <SkeletonPrayerTracker />;
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-10 relative pointer-events-auto animate-fade-in" onClick={() => setActivePrayer(null)}>

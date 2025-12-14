@@ -8,7 +8,7 @@ import Button from '../components/ui/Button';
 import toast from 'react-hot-toast';
 import FinanceAnalytics from '../components/FinanceAnalytics';
 
-import Loader from '../components/Loader';
+import SkeletonFinance from '../components/skeletons/SkeletonFinance';
 
 const TRANSACTION_TYPES = [
   { id: 'income', label: 'Income', icon: TrendingUp },
@@ -172,7 +172,7 @@ export default function Finance() {
       }
   }, [formData.type]);
 
-  if (loadingTransactions) return <Loader />;
+  if (loadingTransactions) return <SkeletonFinance />;
 
   return (
     <div className="mx-auto pb-10">

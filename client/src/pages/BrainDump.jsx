@@ -7,7 +7,7 @@ import Modal from '../components/ui/Modal';
 import GoalForm from '../components/GoalForm';
 import HabitForm from '../components/HabitForm';
 import toast from 'react-hot-toast';
-import Loader from '../components/Loader';
+import SkeletonBrainDump from '../components/skeletons/SkeletonBrainDump';
 
 export default function BrainDump() {
   const queryClient = useQueryClient();
@@ -128,7 +128,7 @@ export default function BrainDump() {
     setConvertPriority('medium');
   };
 
-  if (isLoading) return <Loader />;
+  if (isLoading) return <SkeletonBrainDump />;
 
   return (
     <div className="max-w-4xl mx-auto h-full flex flex-col pb-6 animate-fade-in">

@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
 import { Check, Plus, Trash2, Zap, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import clsx from 'clsx';
-import Loader from '../components/Loader';
+import SkeletonHabitTracker from '../components/skeletons/SkeletonHabitTracker';
 import { 
   startOfMonth, endOfMonth, eachDayOfInterval, format, isSameDay, isToday, 
   startOfWeek, endOfWeek, addMonths, subMonths, addWeeks, subWeeks,
@@ -109,7 +109,7 @@ export default function HabitTracker() {
     return true;
   };
 
-  if (isLoading) return <Loader />;
+  if (isLoading) return <SkeletonHabitTracker />;
 
   return (
     <div className="max-w-7xl mx-auto pb-10 animate-fade-in">

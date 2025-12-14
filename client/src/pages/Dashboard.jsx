@@ -1,9 +1,10 @@
 import React from 'react';
 import { useDashboard } from '../hooks/useDashboard';
 import { useAuth } from '../context/AuthContext';
-import { CheckCircle, XCircle, Brain, Target, DollarSign, Loader2, Activity, Zap } from 'lucide-react';
+import { CheckCircle, XCircle, Brain, Target, DollarSign, Activity, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import DashboardAnalytics from '../components/DashboardAnalytics';
+import SkeletonDashboard from '../components/skeletons/SkeletonDashboard';
 
 import clsx from 'clsx';
 import { format } from 'date-fns';
@@ -13,11 +14,7 @@ export default function Dashboard() {
   const { user } = useAuth();
 
   if (isLoading) {
-    return (
-      <div className="flex h-full items-center justify-center text-accent">
-        <Loader2 className="animate-spin" size={48} />
-      </div>
-    );
+    return <SkeletonDashboard />;
   }
 
   if (error) {

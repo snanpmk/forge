@@ -70,6 +70,7 @@ const GoalSchema = new mongoose.Schema({
 });
 
 // Indexing active goals
+GoalSchema.index({ user: 1 });
 GoalSchema.index({ progress: 1 });
 GoalSchema.index({ target_date: 1 });
 

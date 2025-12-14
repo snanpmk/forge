@@ -37,6 +37,7 @@ const PrayerSchema = new mongoose.Schema({
 // For now, we'll keep it simple.
 
 // Indexing for faster lookups
+PrayerSchema.index({ user: 1 });
 PrayerSchema.index({ date: 1 });
 
 // Indexing active goals

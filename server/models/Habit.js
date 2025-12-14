@@ -57,6 +57,7 @@ const HabitSchema = new mongoose.Schema({
 
 // Indexing
 // Note: Logs is an array, indexing created_at or goal_link_id might be useful.
+HabitSchema.index({ user: 1 });
 HabitSchema.index({ created_at: -1 });
 
 module.exports = mongoose.model('Habit', HabitSchema);

@@ -13,7 +13,7 @@ import { differenceInDays, format, startOfMonth, endOfMonth, eachMonthOfInterval
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
-import Loader from '../components/Loader';
+import SkeletonGoalPlanner from '../components/skeletons/SkeletonGoalPlanner';
 
 export default function GoalPlanner() {
   const queryClient = useQueryClient();
@@ -135,7 +135,7 @@ export default function GoalPlanner() {
       });
   };
 
-  if (isLoading) return <Loader />;
+  if (isLoading) return <SkeletonGoalPlanner />;
 
   return (
     <div className="max-w-7xl mx-auto pb-12 animate-fade-in">

@@ -20,11 +20,12 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 const queryClient = new QueryClient();
 
 import Loader from './components/Loader';
+import SkeletonFullPage from './components/skeletons/SkeletonFullPage';
 
 // Protected Route Component
 const ProtectedRoute = () => {
     const { token, loading } = useAuth();
-    if (loading) return <Loader className="h-screen" />;
+    if (loading) return <SkeletonFullPage />;
     return token ? <Outlet /> : <Navigate to="/login" />;
 };
 

@@ -30,6 +30,7 @@ const BrainDumpSchema = new mongoose.Schema({
 });
 
 // Index for dashboard count
+BrainDumpSchema.index({ user: 1 });
 BrainDumpSchema.index({ processed: 1 });
 
 module.exports = mongoose.model('BrainDump', BrainDumpSchema);

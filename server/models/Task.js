@@ -53,6 +53,7 @@ const TaskSchema = new mongoose.Schema({
 });
 
 // Index for efficient sorting and querying
+TaskSchema.index({ user: 1 });
 TaskSchema.index({ due_date: 1 });
 TaskSchema.index({ status: 1 });
 TaskSchema.index({ goal_link_id: 1 });
