@@ -186,9 +186,9 @@ export default function HabitTracker() {
                               key={habit._id} 
                               onClick={() => toggleMutation.mutate({ id: habit._id, date: currentDate, completed: !completed })}
                               className={clsx(
-                                  "cursor-pointer group relative p-6 rounded-3xl border transition-all duration-300 flex items-center justify-between animate-fade-in hover:scale-[1.02]",
+                                  "cursor-pointer group relative p-6 rounded-3xl border-2 transition-all duration-300 flex items-center justify-between animate-fade-in hover:scale-[1.02]",
                                   completed 
-                                      ? "bg-gradient-to-br from-wellness-green to-emerald-50 border-emerald-100 shadow-soft" 
+                                      ? "bg-green-50 border-green-400 shadow-md" 
                                       : "bg-white border-gray-100 shadow-sm hover:shadow-soft-hover hover:border-gray-200"
                               )}
                               style={{ animationDelay: `${idx * 50}ms` }}
@@ -197,13 +197,13 @@ export default function HabitTracker() {
                               <div className="flex items-center gap-5 z-10">
                                   <div className={clsx(
                                       "w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-sm",
-                                      completed ? "bg-green-500 text-white" : "bg-gray-50 text-gray-300 group-hover:bg-white group-hover:text-gray-400 group-hover:shadow-inner-soft"
+                                      completed ? "bg-green-600 text-white shadow-green-200" : "bg-gray-50 text-gray-300 group-hover:bg-white group-hover:text-gray-400 group-hover:shadow-inner-soft"
                                   )}>
-                                      <Check size={20} strokeWidth={3} className={clsx("transition-transform duration-300", completed ? "scale-100" : "scale-0")} />
+                                      <Check size={24} strokeWidth={3} className={clsx("transition-transform duration-300", completed ? "scale-100" : "scale-0")} />
                                   </div>
                                   <div>
-                                     <h3 className={clsx("font-bold text-lg transition-colors", completed ? "text-green-800" : "text-primary")}>{habit.title}</h3>
-                                     <span className={clsx("text-xs font-bold uppercase tracking-wider", completed ? "text-green-600" : "text-muted")}>
+                                     <h3 className={clsx("font-bold text-lg transition-colors", completed ? "text-green-900 line-through decoration-green-500/50 decoration-2" : "text-primary")}>{habit.title}</h3>
+                                     <span className={clsx("text-xs font-extra-bold uppercase tracking-wider", completed ? "text-green-700 bg-green-100 px-2 py-0.5 rounded-full" : "text-muted")}>
                                          {completed ? "Completed" : "Pending"}
                                      </span>
                                   </div>

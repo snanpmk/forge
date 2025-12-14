@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
-import { Plus, Calendar, Clock, AlertCircle, CheckCircle2, Circle, Trash2, Zap } from 'lucide-react';
+import { Plus, Calendar, Clock, AlertCircle, CheckCircle2, Circle, Trash2, Zap, Pencil } from 'lucide-react';
 import { format, isToday, isPast, isTomorrow, addDays, parseISO } from 'date-fns';
 import clsx from 'clsx';
 import Modal from '../components/ui/Modal';
@@ -16,6 +16,12 @@ import { toast } from 'react-hot-toast';
 export default function TaskManager() {
   const queryClient = useQueryClient();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [taskToEdit, setTaskToEdit] = useState(null);
+
+  // Details Modal
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
   
   // Habit Conversion
   const [isHabitModalOpen, setIsHabitModalOpen] = useState(false);
@@ -38,6 +44,20 @@ export default function TaskManager() {
       queryClient.invalidateQueries(['dashboard']);
       setIsAddModalOpen(false);
     },
+  });
+
+  const editMutation = useMutation({
+    mutationFn: async ({ id, data }) => api.put(`/tasks/${id}`, data),
+    onSuccess: () => {
+        queryClient.invalidateQueries(['tasks']);
+        queryClient.invalidateQueries(['dashboard']);
+        setIsEditModalOpen(false);
+        setTaskToEdit(null);
+        toast.success('Task updated successfully');
+    },
+    onError: () => {
+        toast.error('Failed to update task');
+    }
   });
 
   const createHabitMutation = useMutation({
@@ -141,6 +161,14 @@ export default function TaskManager() {
                                   setTaskToConvert(t);
                                   setIsHabitModalOpen(true);
                               }}
+                              onEdit={(t) => {
+                                  setTaskToEdit(t);
+                                  setIsEditModalOpen(true);
+                              }}
+                              onClick={() => {
+                                  setSelectedTask(task);
+                                  setIsDetailsModalOpen(true);
+                              }}
                           />
                       ))}
                   </div>
@@ -168,6 +196,14 @@ export default function TaskManager() {
                                   setTaskToConvert(t);
                                   setIsHabitModalOpen(true);
                               }}
+                              onEdit={(t) => {
+                                  setTaskToEdit(t);
+                                  setIsEditModalOpen(true);
+                              }}
+                              onClick={() => {
+                                  setSelectedTask(task);
+                                  setIsDetailsModalOpen(true);
+                              }}
                           />
                       ))}
                   </div>
@@ -191,6 +227,14 @@ export default function TaskManager() {
                                   setTaskToConvert(t);
                                   setIsHabitModalOpen(true);
                               }}
+                              onEdit={(t) => {
+                                  setTaskToEdit(t);
+                                  setIsEditModalOpen(true);
+                              }}
+                              onClick={() => {
+                                  setSelectedTask(task);
+                                  setIsDetailsModalOpen(true);
+                              }}
                           />
                       ))}
                   </div>
@@ -212,6 +256,10 @@ export default function TaskManager() {
                                   setTaskToConvert(t);
                                   setIsHabitModalOpen(true);
                               }}
+                              onEdit={(t) => {
+                                  setTaskToEdit(t);
+                                  setIsEditModalOpen(true);
+                              }}
                           />
                       ))}
                   </div>
@@ -226,6 +274,20 @@ export default function TaskManager() {
           />
       </Modal>
 
+      <Modal isOpen={isEditModalOpen} onClose={() => { setIsEditModalOpen(false); setTaskToEdit(null); }} title="Edit Task">
+        {taskToEdit && (
+            <TaskForm
+                initialValues={{
+                    ...taskToEdit,
+                    due_date: taskToEdit.due_date ? taskToEdit.due_date.split('T')[0] : ''
+                }}
+                onSubmit={(data) => editMutation.mutate({ id: taskToEdit._id, data })}
+                onCancel={() => { setIsEditModalOpen(false); setTaskToEdit(null); }}
+                submitLabel="Save Changes"
+            />
+        )}
+      </Modal>
+
       <Modal isOpen={isHabitModalOpen} onClose={() => setIsHabitModalOpen(false)} title="Convert to Habit">
           <HabitForm 
             initialValues={{ title: taskToConvert?.title || '', description: taskToConvert?.description || '' }}
@@ -234,11 +296,61 @@ export default function TaskManager() {
             submitLabel="Start Habit"
           />
       </Modal>
+
+      <Modal isOpen={isDetailsModalOpen} onClose={() => setIsDetailsModalOpen(false)} title="Task Details">
+          {selectedTask && (
+              <div className="space-y-6">
+                  <div>
+                      <h2 className="text-xl font-bold text-gray-900">{selectedTask.title}</h2>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        <span className={clsx(
+                            "px-2.5 py-0.5 rounded-full text-xs font-medium capitalize",
+                            selectedTask.priority === 'high' ? "bg-red-100 text-red-700" :
+                            selectedTask.priority === 'medium' ? "bg-yellow-100 text-yellow-800" :
+                            "bg-green-100 text-green-700"
+                        )}>
+                            {selectedTask.priority} Priority
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 flex items-center gap-1">
+                            <Calendar size={12} />
+                            Due: {format(parseISO(selectedTask.due_date), 'MMM d, yyyy')}
+                        </span>
+                        {selectedTask.estimated_cost > 0 && (
+                            <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 font-mono">
+                                Cost: ₹{selectedTask.estimated_cost}
+                            </span>
+                        )}
+                      </div>
+                  </div>
+
+                  <div className="bg-gray-50 p-4 rounded-xl text-gray-700 whitespace-pre-wrap leading-relaxed border border-gray-100">
+                      {selectedTask.description || <span className="text-gray-400 italic">No description provided.</span>}
+                  </div>
+
+                  <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                            setTaskToEdit(selectedTask);
+                            setIsDetailsModalOpen(false);
+                            setIsEditModalOpen(true);
+                        }}
+                      >
+                        <Pencil size={16} className="mr-2" />
+                        Edit Task
+                      </Button>
+                      <Button variant="ghost" onClick={() => setIsDetailsModalOpen(false)}>
+                          Close
+                      </Button>
+                  </div>
+              </div>
+          )}
+      </Modal>
     </div>
   );
 }
 
-function TaskItem({ task, toggle, remove, onConvert }) {
+function TaskItem({ task, toggle, remove, onConvert, onEdit, onClick }) {
     const isCompleted = task.status === 'completed';
     const date = parseISO(task.due_date);
     
@@ -248,7 +360,10 @@ function TaskItem({ task, toggle, remove, onConvert }) {
             isCompleted ? "border-gray-100 bg-gray-50" : "border-gray-200 hover:border-black shadow-sm hover:shadow-md"
         )}>
             <button 
-                onClick={() => toggle.mutate({ id: task._id, status: isCompleted ? 'pending' : 'completed' })}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    toggle.mutate({ id: task._id, status: isCompleted ? 'pending' : 'completed' });
+                }}
                 className={clsx(
                     "mt-1 flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
                     isCompleted ? "bg-black border-black text-white" : "border-gray-300 hover:border-black text-transparent"
@@ -257,7 +372,7 @@ function TaskItem({ task, toggle, remove, onConvert }) {
                 <CheckCircle2 size={12} strokeWidth={3} />
             </button>
             
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 cursor-pointer" onClick={onClick}>
                 <div className="flex items-start justify-between gap-2">
                     <h4 className={clsx(
                         "font-medium truncate transition-all",
@@ -293,7 +408,14 @@ function TaskItem({ task, toggle, remove, onConvert }) {
                 </div>
             </div>
 
-            <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all">
+            <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all" onClick={e => e.stopPropagation()}>
+                <button 
+                    onClick={() => onEdit(task)}
+                    className="p-1.5 text-gray-300 hover:text-black hover:bg-gray-100 rounded"
+                    title="Edit Task"
+                >
+                    <Pencil size={16} />
+                </button>
                 <button 
                     onClick={() => onConvert(task)}
                     className="p-1.5 text-gray-300 hover:text-orange-500 hover:bg-orange-50 rounded"

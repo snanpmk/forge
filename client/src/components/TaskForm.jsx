@@ -6,7 +6,8 @@ export default function TaskForm({ initialValues, onSubmit, submitLabel = 'Creat
     const [taskData, setTaskData] = useState({ 
         title: '', 
         description: '', 
-        due_date: new Date().toISOString().split('T')[0],
+        // Use local date for default to avoid timezone issues (e.g. yesterday if late night in UTC)
+        due_date: new Date().toLocaleDateString('en-CA'), // YYYY-MM-DD format local time
         priority: 'medium',
         ...initialValues
     });
