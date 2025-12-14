@@ -42,111 +42,60 @@ export default function Dashboard() {
          </div>
       </div>
 
-      {/* Today's Overview Section - Detailed Cards */}
+      {/* Today's Overview Section - Simplified Snapshot */}
       <section>
           <div className="flex items-center gap-2 mb-4">
               <div className="w-1.5 h-1.5 rounded-full bg-primary" />
               <h2 className="text-sm font-bold uppercase tracking-wider text-muted">Today's Snapshot</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               
-              {/* Habits: Consistency Score & Progress */}
+              {/* Prayers Prayed */}
               <div className="card p-5 flex flex-col justify-between hover:scale-[1.02] transition-transform relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-wellness-green/10 rounded-full blur-2xl -mr-6 -mt-6" />
-                  <div className="flex justify-between items-start mb-4">
-                      <div className="flex flex-col">
-                        <span className="text-xs font-bold uppercase tracking-wider text-muted mb-1">Consistency</span>
-                        <span className="text-3xl font-display font-bold text-gray-800">
-                             {habits.length > 0 ? Math.round((habits.filter(h => h.completedToday).length / habits.length) * 100) : 0}%
-                        </span>
-                      </div>
-                      <div className="p-2 bg-green-50 text-green-600 rounded-lg"><Activity size={20} /></div>
-                  </div>
-                  <div className="w-full bg-gray-100 rounded-full h-1.5 mb-2 overflow-hidden">
-                      <div className="bg-green-500 h-full rounded-full transition-all duration-1000" style={{ width: `${habits.length > 0 ? (habits.filter(h => h.completedToday).length / habits.length) * 100 : 0}%` }}></div>
-                  </div>
-                  <div className="text-xs text-muted font-medium flex justify-between">
-                      <span>{habits.filter(h => h.completedToday).length} completed</span>
-                      <span>{habits.length} total</span>
-                  </div>
-              </div>
-
-              {/* Prayers: Visual Status Dots */}
-              <div className="card p-5 flex flex-col justify-between hover:scale-[1.02] transition-transform relative overflow-hidden">
-                   <div className="absolute top-0 right-0 w-24 h-24 bg-wellness-blue/10 rounded-full blur-2xl -mr-6 -mt-6" />
-                  <div className="flex justify-between items-start mb-4">
-                       <div className="flex flex-col">
-                        <span className="text-xs font-bold uppercase tracking-wider text-muted mb-1">Prayers</span>
-                        <span className="text-3xl font-display font-bold text-gray-800">
-                             {new Set(prayers.filter(p => p.status === 'on-time').map(p => p.name)).size}<span className="text-lg text-gray-400 font-medium">/5</span>
-                        </span>
-                      </div>
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-wellness-blue/10 rounded-full blur-2xl -mr-6 -mt-6" />
+                  <div className="flex justify-between items-start mb-2">
+                      <span className="text-xs font-bold uppercase tracking-wider text-muted">Prayers Prayed</span>
                       <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><Zap size={20} /></div>
                   </div>
-                  <div className="flex justify-between items-center mt-1">
-                      {['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'].map((pName) => {
-                          const p = prayers.find(pr => pr.name === pName);
-                          const status = p?.status || 'pending';
-                          let colorClass = 'bg-gray-200 border-gray-300'; // pending
-                          if (status === 'on-time') colorClass = 'bg-emerald-400 border-emerald-500 shadow-[0_0_8px_rgba(52,211,153,0.5)]';
-                          if (status === 'missed') colorClass = 'bg-rose-400 border-rose-500';
-                          
-                          return (
-                              <div key={pName} className="flex flex-col items-center gap-1 group/p relative">
-                                  <div className={`w-3 h-3 rounded-full border ${colorClass} transition-all`} />
-                                  <span className="text-[9px] font-bold text-muted uppercase opacity-60">{pName.substring(0,1)}</span>
-                                   {/* Tooltip */}
-                                  <div className="absolute bottom-full mb-2 hidden group-hover/p:block bg-gray-800 text-white text-[10px] font-bold px-2 py-1 rounded whitespace-nowrap z-10">
-                                      {pName}: {status}
-                                  </div>
-                              </div>
-                          )
-                      })}
+                  <div className="text-3xl font-display font-bold text-gray-800 mt-2">
+                       {new Set(prayers.filter(p => p.status === 'on-time').map(p => p.name)).size} <span className="text-lg text-gray-400 font-medium">/ 5</span>
                   </div>
               </div>
 
-              {/* Tasks: Upcoming List + Done Count */}
-              <div className="card p-5 flex flex-col justify-between hover:scale-[1.02] transition-transform relative overflow-hidden">
+              {/* Tasks Done */}
+              <div className="card p-5 flex flex-col justify-between hover:scale-[1.02] transition-transform relative overflow-hidden group">
                    <div className="absolute top-0 right-0 w-24 h-24 bg-wellness-lavender/10 rounded-full blur-2xl -mr-6 -mt-6" />
                   <div className="flex justify-between items-start mb-2">
-                       <div className="flex flex-col">
-                        <span className="text-xs font-bold uppercase tracking-wider text-muted mb-1">Tasks</span>
-                        <div className="flex items-baseline gap-2">
-                             <span className="text-3xl font-display font-bold text-gray-800">{tasks?.doneCount || 0}</span>
-                             <span className="text-xs font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">Done</span>
-                        </div>
-                      </div>
+                      <span className="text-xs font-bold uppercase tracking-wider text-muted">Tasks Done</span>
                       <div className="p-2 bg-purple-50 text-purple-600 rounded-lg"><CheckCircle size={20} /></div>
                   </div>
-                  <div className="space-y-2 mt-2">
-                      {tasks?.upcoming && tasks.upcoming.length > 0 ? (
-                          tasks.upcoming.slice(0, 2).map(t => (
-                              <div key={t._id} className="flex items-center gap-2 text-xs font-medium text-gray-600 bg-gray-50 p-2 rounded-lg border border-gray-100">
-                                  <div className={`w-1.5 h-1.5 rounded-full ${t.priority === 'high' ? 'bg-red-400' : 'bg-blue-400'}`} />
-                                  <span className="truncate">{t.title}</span>
-                              </div>
-                          ))
-                      ) : (
-                          <div className="text-xs text-muted italic p-2">No upcoming tasks today</div>
-                      )}
-                      {tasks?.upcoming?.length > 2 && <div className="text-[10px] text-center text-muted">+{tasks.upcoming.length - 2} more</div>}
+                  <div className="text-3xl font-display font-bold text-gray-800 mt-2">
+                       {tasks?.doneCount || 0}
                   </div>
               </div>
 
-              {/* Finance: Today vs Month */}
+              {/* Habits Finished */}
+              <div className="card p-5 flex flex-col justify-between hover:scale-[1.02] transition-transform relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-wellness-green/10 rounded-full blur-2xl -mr-6 -mt-6" />
+                  <div className="flex justify-between items-start mb-2">
+                      <span className="text-xs font-bold uppercase tracking-wider text-muted">Habits Finished</span>
+                      <div className="p-2 bg-green-50 text-green-600 rounded-lg"><Activity size={20} /></div>
+                  </div>
+                  <div className="text-3xl font-display font-bold text-gray-800 mt-2">
+                       {habits.filter(h => h.completedToday).length} <span className="text-lg text-gray-400 font-medium">/ {habits.length}</span>
+                  </div>
+              </div>
+
+              {/* Money Spent */}
               <div className="card p-5 flex flex-col justify-between hover:scale-[1.02] transition-transform border-red-50 hover:border-red-100 relative overflow-hidden">
                    <div className="absolute top-0 right-0 w-24 h-24 bg-red-50 rounded-full blur-2xl -mr-6 -mt-6 opacity-60" />
-                  <div className="flex justify-between items-start mb-4">
-                      <div className="flex flex-col">
-                        <span className="text-xs font-bold uppercase tracking-wider text-muted mb-1">Spent Today</span>
-                        <span className="text-3xl font-display font-bold text-gray-800">₹{finance.todayExpense || 0}</span>
-                      </div>
+                  <div className="flex justify-between items-start mb-2">
+                      <span className="text-xs font-bold uppercase tracking-wider text-muted">Spent Today</span>
                       <div className="p-2 bg-red-50 text-red-500 rounded-lg"><DollarSign size={20} /></div>
                   </div>
-                   <div className="flex items-center justify-between mt-2 pt-3 border-t border-gray-100">
-                       <span className="text-xs font-medium text-muted">Total Monthly</span>
-                       <span className="text-xs font-bold text-primary">₹{finance.expense}</span>
-                   </div>
+                  <div className="text-3xl font-display font-bold text-gray-800 mt-2">
+                       ₹{finance.todayExpense || 0}
+                  </div>
               </div>
           </div>
       </section>

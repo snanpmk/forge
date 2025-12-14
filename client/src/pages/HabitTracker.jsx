@@ -70,7 +70,8 @@ export default function HabitTracker() {
   const toggleMutation = useMutation({
     mutationFn: async ({ id, date, completed }) => {
         const dateStr = format(date, 'yyyy-MM-dd');
-        return api.put(`/habits/${id}/log`, { date: dateStr, completed });
+        const timezoneOffset = new Date().getTimezoneOffset();
+        return api.put(`/habits/${id}/log`, { date: dateStr, completed, timezoneOffset });
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['habits']);

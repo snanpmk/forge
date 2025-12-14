@@ -80,43 +80,63 @@ router.put('/:id/log', async (req, res) => {
     const habit = await Habit.findOne({ _id: req.params.id, user: req.user.id });
     if (!habit) return res.status(404).json({ message: 'Habit not found' });
 
-    // Handle date as String "YYYY-MM-DD" or fallback to Date object
-    // We normalize everything to noon UTC to avoid date shifting issues
+    const clientOffsetMinutes = req.body.timezoneOffset || 0;
+    
+    // Helper to get Client Local YYYY-MM-DD from a Date object (UTC)
+    const getClientLocalDateString = (dateObj) => {
+        // Apply offset to get local time representation in UTC container
+        // offset is in minutes, positive means behind UTC (usually, JS behavior) -> but getTimezoneOffset returns (UTC - Local) in minutes.
+        // So Local = UTC - Offset.
+        const localTime = new Date(dateObj.getTime() - (clientOffsetMinutes * 60000));
+        return localTime.toISOString().split('T')[0];
+    };
+
     let targetDateStr;
     if (req.body.date) {
-        // If it's a date string like "2023-12-15", use it. 
-        // If it's a ISO string, convert to YYYY-MM-DD.
         if (req.body.date.includes('T')) {
              targetDateStr = new Date(req.body.date).toISOString().split('T')[0];
         } else {
              targetDateStr = req.body.date;
         }
     } else {
-        targetDateStr = new Date().toISOString().split('T')[0];
+        // If no date provided, use "Today" relative to client
+        targetDateStr = getClientLocalDateString(new Date());
     }
     
-    // Create a Date object for storage that is safely "noon UTC" on that day
-    // This allows keeping the current Schema type: Date
+    // Create a Date object for storage that is safely "noon UTC" on that day.
+    // This isn't strictly necessary for matching anymore but good for data cleanliness.
     const targetDate = new Date(`${targetDateStr}T12:00:00.000Z`);
 
-    const existingLogIndex = habit.logs.findIndex(log => {
-      // Compare by YYYY-MM-DD string
-      const logDateStr = new Date(log.date).toISOString().split('T')[0];
-      return logDateStr === targetDateStr;
+    // FIND ALL MATCHING LOGS based on Client Local Time
+    // We filter the array to find indices of all logs that "look like" the target date to the client
+    const matchingLogIndices = [];
+    habit.logs.forEach((log, index) => {
+        const logClientDateStr = getClientLocalDateString(new Date(log.date));
+        if (logClientDateStr === targetDateStr) {
+            matchingLogIndices.push(index);
+        }
     });
 
     let xpAwarded = 0;
     let gamificationResult = null;
 
-    if (existingLogIndex > -1) {
-      // Update existing log
-      // Only award XP if changing from false -> true
-      if (!habit.logs[existingLogIndex].completed && req.body.completed) {
+    if (matchingLogIndices.length > 0) {
+      // Update ALL matching logs (this fixes duplicates/ghost logs)
+      
+      // Check if we are flipping from incomplete -> complete
+      // We only award XP if at least one of them was incomplete and we are setting to complete
+      const anyIncomplete = matchingLogIndices.some(idx => !habit.logs[idx].completed);
+      
+      if (anyIncomplete && req.body.completed) {
           xpAwarded = 20;
       }
-      habit.logs[existingLogIndex].completed = req.body.completed;
-      // Also update the date object to keep it consistent
-      habit.logs[existingLogIndex].date = targetDate;
+
+      matchingLogIndices.forEach(idx => {
+          habit.logs[idx].completed = req.body.completed;
+          // Normalize the date to our standard targetDate (optional but good for cleanup)
+          habit.logs[idx].date = targetDate; 
+      });
+
     } else {
       // Add new log
       if (req.body.completed) {
