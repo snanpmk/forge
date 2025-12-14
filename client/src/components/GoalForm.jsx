@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Target, Info, Plus } from 'lucide-react';
+import { Target, Info, Plus, X, List } from 'lucide-react';
 
 export default function GoalForm({ initialValues, onSubmit, submitLabel = 'Create Goal' }) {
     const [goalData, setGoalData] = useState({ 
@@ -15,10 +15,12 @@ export default function GoalForm({ initialValues, onSubmit, submitLabel = 'Creat
             relevant: '',
             time_bound: ''
         },
+        milestones: [],
         ...initialValues // Override defaults if provided
     });
 
     const [hasBudget, setHasBudget] = useState(false);
+    const [newMilestone, setNewMilestone] = useState('');
 
     useEffect(() => {
         if (initialValues) {
@@ -33,6 +35,24 @@ export default function GoalForm({ initialValues, onSubmit, submitLabel = 'Creat
         setGoalData(prev => ({
             ...prev,
             smart_criteria: { ...prev.smart_criteria, [field]: value }
+        }));
+    };
+
+    const addMilestone = (e) => {
+        e.preventDefault();
+        if (newMilestone.trim()) {
+            setGoalData(prev => ({
+                ...prev,
+                milestones: [...prev.milestones, { title: newMilestone, completed: false }]
+            }));
+            setNewMilestone('');
+        }
+    };
+
+    const removeMilestone = (index) => {
+        setGoalData(prev => ({
+            ...prev,
+            milestones: prev.milestones.filter((_, i) => i !== index)
         }));
     };
 
@@ -111,11 +131,12 @@ export default function GoalForm({ initialValues, onSubmit, submitLabel = 'Creat
                             className="input-field text-sm"
                             />
                         </div>
-                        <div>
+                        <div className="w-full">
                             <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Time-bound (When?)</label>
                             <input 
                             type="date"
-                            className="input-field text-sm"
+                            className="input-field text-sm w-full"
+                            style={{ minWidth: '100%' }} // Force full width on mobile
                             value={goalData.target_date} 
                             onChange={(e) => {
                                 setGoalData({ ...goalData, target_date: e.target.value });
@@ -123,6 +144,50 @@ export default function GoalForm({ initialValues, onSubmit, submitLabel = 'Creat
                             }}
                         />
                         </div>
+                </div>
+            </div>
+
+            {/* Milestones Section */}
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 space-y-3">
+                <div className="flex items-center gap-2 text-gray-700 mb-2">
+                    <List size={16} />
+                    <span className="text-sm font-bold">Milestones</span>
+                </div>
+                
+                <div className="flex gap-2">
+                    <input 
+                        type="text" 
+                        value={newMilestone}
+                        onChange={(e) => setNewMilestone(e.target.value)}
+                        placeholder="Add a milestone step..." 
+                        className="input-field text-sm flex-1"
+                        onKeyDown={(e) => e.key === 'Enter' && addMilestone(e)}
+                    />
+                    <button 
+                        type="button"
+                        onClick={addMilestone}
+                        className="p-3 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-colors"
+                    >
+                        <Plus size={18} />
+                    </button>
+                </div>
+
+                <div className="space-y-2 mt-2">
+                    {goalData.milestones?.map((milestone, idx) => (
+                        <div key={idx} className="flex items-center justify-between bg-white p-2.5 rounded-xl border border-gray-200/50 shadow-sm text-sm">
+                            <span className="text-primary truncate">{typeof milestone === 'string' ? milestone : milestone.title}</span>
+                            <button 
+                                type="button" 
+                                onClick={() => removeMilestone(idx)}
+                                className="text-gray-400 hover:text-red-500 p-1"
+                            >
+                                <X size={14} />
+                            </button>
+                        </div>
+                    ))}
+                    {goalData.milestones?.length === 0 && (
+                        <p className="text-xs text-muted italic text-center py-2">No milestones added yet.</p>
+                    )}
                 </div>
             </div>
 
@@ -152,7 +217,7 @@ export default function GoalForm({ initialValues, onSubmit, submitLabel = 'Creat
                 <div className="flex flex-col gap-2">
                    <label className="flex items-center gap-2 cursor-pointer group">
                         <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${hasBudget ? 'bg-primary border-primary' : 'bg-white border-gray-300 group-hover:border-primary'}`}>
-                            {hasBudget && <Plus size={14} className="text-white rotate-45" />} {/* Using Plus rotated as check or close? Actually Check is better. Let's use simple boolean logic */}
+                            {hasBudget && <Plus size={14} className="text-white rotate-45" />} 
                              <input 
                                 type="checkbox" 
                                 className="hidden" 

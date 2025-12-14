@@ -58,7 +58,10 @@ export default function GoalPlanner() {
 
   // Create Goal
   const createGoalMutation = useMutation({
-    mutationFn: async (goalData) => api.post('/goals', { ...goalData, milestones: [] }),
+    mutationFn: async (goalData) => api.post('/goals', { 
+        ...goalData, 
+        milestones: goalData.milestones || [] 
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries(['goals']);
       queryClient.invalidateQueries(['dashboard']);
