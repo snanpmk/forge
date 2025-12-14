@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
+const logger = require('./utils/logger'); // Import logger
 
 dotenv.config();
 
@@ -53,5 +54,5 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
+  logger.info(`Server running on port ${PORT}`);
 });
