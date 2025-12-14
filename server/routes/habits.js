@@ -28,31 +28,41 @@ router.post('/', async (req, res) => {
 
 // Helper to calculate streak
 const calculateStreak = (logs) => {
+  if (!logs || logs.length === 0) return 0;
+  
+  // Normalize all log dates to YYYY-MM-DD strings to ensure uniqueness and order
   const completedDates = logs
     .filter(l => l.completed)
-    .map(l => new Date(l.date).setHours(0,0,0,0))
-    .sort((a, b) => b - a);
+    .map(l => {
+        // Ensure we parse the date string or Date object correctly to YYYY-MM-DD
+        const dateObj = new Date(l.date);
+        return dateObj.toISOString().split('T')[0];
+    })
+    .sort((a, b) => b.localeCompare(a));
   
   const uniqueDates = [...new Set(completedDates)];
   
   if (uniqueDates.length === 0) return 0;
   
-  const today = new Date().setHours(0,0,0,0);
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
+  const today = new Date().toISOString().split('T')[0];
+  const yesterdayDate = new Date();
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  const yesterday = yesterdayDate.toISOString().split('T')[0];
   
   // If last completion was before yesterday, streak is broken
-  if (uniqueDates[0] < yesterday.getTime()) return 0;
+  // Note: we compare strings "YYYY-MM-DD"
+  if (uniqueDates[0] < yesterday) return 0;
   
   let streak = 0;
-  let expectedDate = uniqueDates[0];
+  let expectedDate = uniqueDates[0]; // Start checking from the most recent completed date
   
   for (let date of uniqueDates) {
     if (date === expectedDate) {
       streak++;
+      // Calculate previous day
       const prev = new Date(expectedDate);
       prev.setDate(prev.getDate() - 1);
-      expectedDate = prev.getTime();
+      expectedDate = prev.toISOString().split('T')[0];
     } else {
       break;
     }
@@ -70,15 +80,30 @@ router.put('/:id/log', async (req, res) => {
     const habit = await Habit.findOne({ _id: req.params.id, user: req.user.id });
     if (!habit) return res.status(404).json({ message: 'Habit not found' });
 
-    // Check if log for target date exists
-    const targetDate = req.body.date ? new Date(req.body.date) : new Date();
-    targetDate.setHours(0,0,0,0);
-    const nextDay = new Date(targetDate);
-    nextDay.setDate(nextDay.getDate() + 1);
+    // Handle date as String "YYYY-MM-DD" or fallback to Date object
+    // We normalize everything to noon UTC to avoid date shifting issues
+    let targetDateStr;
+    if (req.body.date) {
+        // If it's a date string like "2023-12-15", use it. 
+        // If it's a ISO string, convert to YYYY-MM-DD.
+        if (req.body.date.includes('T')) {
+             targetDateStr = new Date(req.body.date).toISOString().split('T')[0];
+        } else {
+             targetDateStr = req.body.date;
+        }
+    } else {
+        targetDateStr = new Date().toISOString().split('T')[0];
+    }
+    
+    // Create a Date object for storage that is safely "noon UTC" on that day
+    // This allows keeping the current Schema type: Date
+    const targetDate = new Date(`${targetDateStr}T12:00:00.000Z`);
 
-    const existingLogIndex = habit.logs.findIndex(log => 
-      new Date(log.date) >= targetDate && new Date(log.date) < nextDay
-    );
+    const existingLogIndex = habit.logs.findIndex(log => {
+      // Compare by YYYY-MM-DD string
+      const logDateStr = new Date(log.date).toISOString().split('T')[0];
+      return logDateStr === targetDateStr;
+    });
 
     let xpAwarded = 0;
     let gamificationResult = null;
@@ -90,6 +115,8 @@ router.put('/:id/log', async (req, res) => {
           xpAwarded = 20;
       }
       habit.logs[existingLogIndex].completed = req.body.completed;
+      // Also update the date object to keep it consistent
+      habit.logs[existingLogIndex].date = targetDate;
     } else {
       // Add new log
       if (req.body.completed) {
@@ -110,6 +137,7 @@ router.put('/:id/log', async (req, res) => {
 
     res.json({ ...habit.toObject(), gamification: gamificationResult ? { xpAdded: xpAwarded, ...gamificationResult } : null });
   } catch (err) {
+    console.error(err);
     res.status(400).json({ message: err.message });
   }
 });
