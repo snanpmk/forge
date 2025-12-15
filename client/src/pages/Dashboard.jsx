@@ -51,7 +51,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               
               {/* Prayers Prayed */}
-              <div className="card p-5 flex flex-col justify-between hover:scale-[1.02] transition-transform relative overflow-hidden group">
+              <Link to="/prayers" className="card p-5 flex flex-col justify-between hover:scale-[1.02] transition-transform relative overflow-hidden group cursor-pointer">
                   <div className="absolute top-0 right-0 w-24 h-24 bg-wellness-blue/10 rounded-full blur-2xl -mr-6 -mt-6" />
                   <div className="flex justify-between items-start mb-2">
                       <span className="text-xs font-bold uppercase tracking-wider text-muted">Prayers Prayed</span>
@@ -60,10 +60,10 @@ export default function Dashboard() {
                   <div className="text-3xl font-display font-bold text-gray-800 mt-2">
                        {new Set(prayers.filter(p => p.status === 'on-time').map(p => p.name)).size} <span className="text-lg text-gray-400 font-medium">/ 5</span>
                   </div>
-              </div>
+              </Link>
 
               {/* Tasks Done */}
-              <div className="card p-5 flex flex-col justify-between hover:scale-[1.02] transition-transform relative overflow-hidden group">
+              <Link to="/tasks" className="card p-5 flex flex-col justify-between hover:scale-[1.02] transition-transform relative overflow-hidden group cursor-pointer">
                    <div className="absolute top-0 right-0 w-24 h-24 bg-wellness-lavender/10 rounded-full blur-2xl -mr-6 -mt-6" />
                   <div className="flex justify-between items-start mb-2">
                       <span className="text-xs font-bold uppercase tracking-wider text-muted">Tasks Done</span>
@@ -72,10 +72,10 @@ export default function Dashboard() {
                   <div className="text-3xl font-display font-bold text-gray-800 mt-2">
                        {tasks?.doneCount || 0} <span className="text-lg text-gray-400 font-medium">/ {tasks?.total || 0}</span>
                   </div>
-              </div>
+              </Link>
 
               {/* Habits Finished */}
-              <div className="card p-5 flex flex-col justify-between hover:scale-[1.02] transition-transform relative overflow-hidden group">
+              <Link to="/habits" className="card p-5 flex flex-col justify-between hover:scale-[1.02] transition-transform relative overflow-hidden group cursor-pointer">
                   <div className="absolute top-0 right-0 w-24 h-24 bg-wellness-green/10 rounded-full blur-2xl -mr-6 -mt-6" />
                   <div className="flex justify-between items-start mb-2">
                       <span className="text-xs font-bold uppercase tracking-wider text-muted">Habits Finished</span>
@@ -84,10 +84,10 @@ export default function Dashboard() {
                   <div className="text-3xl font-display font-bold text-gray-800 mt-2">
                        {habits.filter(h => h.completedToday).length} <span className="text-lg text-gray-400 font-medium">/ {habits.length}</span>
                   </div>
-              </div>
+              </Link>
 
               {/* Money Spent */}
-              <div className="card p-5 flex flex-col justify-between hover:scale-[1.02] transition-transform border-red-50 hover:border-red-100 relative overflow-hidden">
+              <Link to="/finance" className="card p-5 flex flex-col justify-between hover:scale-[1.02] transition-transform border-red-50 hover:border-red-100 relative overflow-hidden cursor-pointer">
                    <div className="absolute top-0 right-0 w-24 h-24 bg-red-50 rounded-full blur-2xl -mr-6 -mt-6 opacity-60" />
                   <div className="flex justify-between items-start mb-2">
                       <span className="text-xs font-bold uppercase tracking-wider text-muted">Spent Today</span>
@@ -96,7 +96,7 @@ export default function Dashboard() {
                   <div className="text-3xl font-display font-bold text-gray-800 mt-2">
                        ₹{finance.todayExpense || 0}
                   </div>
-              </div>
+              </Link>
           </div>
       </section>
 
