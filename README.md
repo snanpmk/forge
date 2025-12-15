@@ -1,6 +1,8 @@
-# My Journal - Ultimate Self-Development Hub
+# Forge - Ultimate Self-Development Hub
 
 A comprehensive dashboard for tracking your life, built with the MERN stack (MongoDB, Express, React, Node.js). This application integrates Habit Tracking, Prayer Schedules, Goal Planning, Brain Dumps, and Finance Management into a single, cohesive interface.
+
+## 🚀 Features
 
 ## 🚀 Features
 
@@ -8,6 +10,19 @@ A comprehensive dashboard for tracking your life, built with the MERN stack (Mon
 - **Performance Analytics**: Visual graphs (30-day trends) showing your consistency with habits and prayers.
 - **Weekly/Monthly Filters**: Toggle between views to analyze short-term vs long-term performance.
 - **Snapshots**: Quick views of upcoming goals, financial status, and pending brain dump items.
+
+### 🎮 Gamification
+- **XP System**: Earn Experience Points for every habit completed, task finished, and prayer logged.
+- **Leveling**: visual progress bar and level display that grows as you stay productive.
+- **Rewards**: Real-time feedback and toast notifications celebrating your wins.
+
+### 🎨 Theme Customization
+- **Multiple Themes**: Choose from Light, Dark, Midnight, and Nature themes.
+- **Persistent Settings**: Your theme preference is saved and applied automatically.
+
+### 📱 PWA / Mobile Support
+- **Installable**: Add to Home Screen on iOS and Android for a native app-like experience.
+- **Offline Capable**: Core UI loads instantly, even with spotty internet.
 
 ### ✅ Habit Tracker
 - **Daily Tracking**: Mark habits as complete/incomplete.
@@ -34,7 +49,8 @@ A comprehensive dashboard for tracking your life, built with the MERN stack (Mon
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: React, Vite, Tailwind CSS, Recharts, Framer Motion (planned), Lucide Icons, React Query.
+- **Frontend**: React, Vite, Tailwind CSS, Recharts, Framer Motion, Lucide Icons, React Query.
+- **PWA**: vite-plugin-pwa for offline capabilities and installation.
 - **Backend**: Node.js, Express.js.
 - **Database**: MongoDB (Mongoose ORM).
 - **Tooling**: Concurrently (to run client/server together).

@@ -48,12 +48,18 @@ Forge makes productivity fun by treating your life like a role-playing game (RPG
 *   **Earn XP:** You gain Experience Points (XP) for almost everything good you do—finishing a task, completing a habit, or logging a prayer.
 *   **Level Up:** As you gain XP, your digital "User Level" increases. It’s a rewarding way to visualize your personal growth over time.
 
+## 📱 Mobile Experience (PWA)
+Forge is designed to go where you go.
+*   **Installable App:** Add Forge to your home screen on iOS or Android—no app store required.
+*   **App-Like Feel:** Runs full-screen with smooth transitions, removing the browser "feeling" so you can focus on your life.
+
 ## 🎨 Design Philosophy
 
 We believe productivity tools shouldn't be boring. Forge features:
 *   **Premium Aesthetic:** Clean typography, glass-like transparency, and subtle animations.
 *   **Focus Mode:** A clutter-free interface that helps you concentrate.
-*   **Personalization:** Your avatar and progress travel with you everywhere.
+*   **Deep Personalization:** Choose between Light, Dark, Midnight, and Nature themes to match your mood and environment.
+*   **Your Journey:** Your avatar and progress travel with you everywhere.
 
 ---
 
