@@ -269,7 +269,7 @@ export default function HabitTracker() {
                             <td colSpan={gridDays.length + 3} className="p-16 text-center text-muted bg-gray-50/30">
                                 <div className="flex flex-col items-center gap-3">
                                     <div className="p-4 bg-gray-100 rounded-full">
-                                        <CalendarIcon size={24} className="text-gray-400" />
+                                        <CalIcon size={24} className="text-gray-400" />
                                     </div>
                                     <p>No habits to display.</p>
                                 </div>

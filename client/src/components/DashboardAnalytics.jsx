@@ -89,12 +89,19 @@ export default function DashboardAnalytics() {
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={trends} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <defs>
-                <linearGradient id="colorOverall" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#1f2937" stopOpacity={0.2}/>
-                  <stop offset="95%" stopColor="#1f2937" stopOpacity={0}/>
+                 {/* Habits Gradient */}
+                <linearGradient id="colorHabits" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                 </linearGradient>
+                {/* Prayers Gradient */}
+                <linearGradient id="colorPrayers" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.2}/>
+                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                </linearGradient>
+                {/* Tasks Gradient */}
                 <linearGradient id="colorTasks" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
+                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
                   <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                 </linearGradient>
               </defs>
@@ -110,11 +117,18 @@ export default function DashboardAnalytics() {
                         <div className="bg-white/90 backdrop-blur-md p-4 border border-white/50 shadow-xl rounded-2xl min-w-[200px]">
                         <p className="font-bold text-sm mb-3 text-primary border-b border-gray-100 pb-2">{label}</p>
                         <div className="space-y-2">
-                             {/* Consistency Code */}
-                            {payload.find(p => p.name === 'Consistency') && (
+                             {/* Habit Score */}
+                            {payload.find(p => p.name === 'Habits') && (
                               <div className="flex justify-between items-center text-xs">
-                                <span className="text-gray-500">Consistency</span>
-                                <span className="font-bold text-primary">{payload.find(p => p.name === 'Consistency').value}%</span>
+                                <span className="text-gray-500">Habits</span>
+                                <span className="font-bold text-emerald-600">{payload.find(p => p.name === 'Habits').value}%</span>
+                              </div>
+                            )}
+                             {/* Prayer Score */}
+                             {payload.find(p => p.name === 'Prayers') && (
+                              <div className="flex justify-between items-center text-xs">
+                                <span className="text-gray-500">Prayers</span>
+                                <span className="font-bold text-violet-600">{payload.find(p => p.name === 'Prayers').value}%</span>
                               </div>
                             )}
                             {/* Tasks */}
@@ -124,13 +138,6 @@ export default function DashboardAnalytics() {
                                 <span className="font-bold text-blue-600">{payload.find(p => p.name === 'Tasks Completed').value}</span>
                               </div>
                             )}
-                             {/* Expense */}
-                             {payload.find(p => p.name !== 'Consistency' && p.name !== 'Tasks Completed') && (
-                                <div className="flex justify-between items-center text-xs">
-                                    <span className="text-gray-500">Expense</span>
-                                    <span className="font-bold text-red-500">₹{payload.find(p => p.dataKey === 'expense')?.value}</span>
-                                </div>
-                             )}
                         </div>
                         </div>
                     );
@@ -143,12 +150,22 @@ export default function DashboardAnalytics() {
               <Area 
                 yAxisId="left"
                 type="monotone" 
-                dataKey="overallScore" 
-                name="Consistency" 
-                stroke="#1f2937" 
-                strokeWidth={3}
+                dataKey="habitScore" 
+                name="Habits" 
+                stroke="#10b981" 
+                strokeWidth={2}
                 fillOpacity={1} 
-                fill="url(#colorOverall)" 
+                fill="url(#colorHabits)" 
+              />
+               <Area 
+                yAxisId="left"
+                type="monotone" 
+                dataKey="prayerScore" 
+                name="Prayers" 
+                stroke="#8b5cf6" 
+                strokeWidth={2}
+                fillOpacity={1} 
+                fill="url(#colorPrayers)" 
               />
               
               {days !== 365 && <Area 
@@ -158,6 +175,7 @@ export default function DashboardAnalytics() {
                 name="Tasks Completed" 
                 stroke="#3b82f6" 
                 strokeWidth={2}
+                strokeDasharray="5 5"
                 fillOpacity={1}
                 fill="url(#colorTasks)" 
               />}
