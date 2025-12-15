@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
 import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -56,10 +56,12 @@ export default function HabitTracker() {
       const { data } = await api.get('/habits');
       return data;
     },
+    staleTime: 30000, // Consider data fresh for 30 seconds
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
   });
 
   // Calculate streak helper (Client-side mirror of backend)
-  const calculateStreak = (logs) => {
+  const calculateStreak = useCallback((logs) => {
     if (!logs || logs.length === 0) return 0;
     
     // Normalize dates to YYYY-MM-DD
@@ -94,7 +96,7 @@ export default function HabitTracker() {
       }
     }
     return streak;
-  };
+  }, []);
 
   // Mutations
   const addMutation = useMutation({
@@ -147,7 +149,7 @@ export default function HabitTracker() {
       toast.error('Failed to update habit');
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['habits'] });
+      // Only invalidate dashboard since habits are already optimistically updated
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
@@ -164,8 +166,12 @@ export default function HabitTracker() {
 
   // Filter habits for current view properties
   const filteredHabits = habits; // We filter per row for grid, or per card for list.
-  // For List View (Today), we only show scheduled.
-  const todayHabits = habits?.filter(h => isHabitScheduledForDate(h, currentDate));
+  
+  // For List View (Today), we only show scheduled - memoized to avoid recalculation
+  const todayHabits = useMemo(() => 
+    habits?.filter(h => isHabitScheduledForDate(h, currentDate)) || [],
+    [habits, currentDate]
+  );
 
   return (
     <div className="max-w-7xl mx-auto pb-10 animate-fade-in">
