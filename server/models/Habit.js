@@ -58,6 +58,7 @@ const HabitSchema = new mongoose.Schema({
 // Indexing
 // Note: Logs is an array, indexing created_at or goal_link_id might be useful.
 HabitSchema.index({ user: 1 });
+HabitSchema.index({ user: 1, _id: 1 }); // Compound index for findOne queries in toggle
 HabitSchema.index({ created_at: -1 });
 
 module.exports = mongoose.model('Habit', HabitSchema);

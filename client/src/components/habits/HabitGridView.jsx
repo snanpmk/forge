@@ -72,7 +72,7 @@ export default function HabitGridView({ habits, gridDays, onToggle, onDelete }) 
                                                     "w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-300 shadow-sm",
                                                     completed 
                                                         ? "bg-wellness-green text-green-700 scale-100 shadow-soft" 
-                                                        : "bg-white border border-gray-100 text-transparent hover:border-gray-300 hover:scale-90"
+                                                        : "bg-white border border-gray-100 text-transparent hover:border-gray-300 lg:hover:scale-90"
                                                 )}>
                                                     <Check size={16} strokeWidth={4} className={clsx("transition-transform", completed ? "scale-100" : "scale-0")} />
                                                 </div>

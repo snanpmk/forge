@@ -108,14 +108,14 @@ router.put('/:id/log', async (req, res) => {
     const targetDate = new Date(`${targetDateStr}T12:00:00.000Z`);
 
     // FIND ALL MATCHING LOGS based on Client Local Time
-    // We filter the array to find indices of all logs that "look like" the target date to the client
-    const matchingLogIndices = [];
-    habit.logs.forEach((log, index) => {
-        const logClientDateStr = getClientLocalDateString(new Date(log.date));
-        if (logClientDateStr === targetDateStr) {
-            matchingLogIndices.push(index);
-        }
-    });
+    // Optimized: Use map + filter for better performance
+    const matchingLogIndices = habit.logs
+      .map((log, index) => ({
+        index,
+        dateStr: getClientLocalDateString(new Date(log.date))
+      }))
+      .filter(item => item.dateStr === targetDateStr)
+      .map(item => item.index);
 
     let xpAwarded = 0;
 
@@ -153,8 +153,8 @@ router.put('/:id/log', async (req, res) => {
     let gamificationPromise = Promise.resolve(null);
 
     if (xpAwarded > 0) {
-        const userId = req.user ? req.user.id : (await require('../models/User').findOne())._id;
-        gamificationPromise = addXP(userId, xpAwarded);
+        // User ID is already available from req.user (auth middleware ensures this)
+        gamificationPromise = addXP(req.user.id, xpAwarded);
     }
 
     const [savedHabit, gamificationResult] = await Promise.all([savePromise, gamificationPromise]);

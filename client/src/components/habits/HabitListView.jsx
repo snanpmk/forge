@@ -57,7 +57,9 @@ export default function HabitListView({ habits, currentDate, onToggle, onDelete,
                                 confirmAction('Delete this habit?', () => onDelete(habit._id));
                             }}
                             className={clsx(
-                                "absolute top-3 right-3 p-2 rounded-xl opacity-0 group-hover:opacity-100 transition-all z-20",
+                                "absolute top-3 right-3 p-2 rounded-xl transition-all z-20",
+                                "opacity-100 lg:opacity-0 lg:group-hover:opacity-100", // Visible on mobile, hover-only on large screens
+                                "lg:pointer-events-none lg:group-hover:pointer-events-auto", // Prevent blocking clicks when hidden on desktop
                                 completed ? "hover:bg-green-200/50 text-green-700/50 hover:text-green-800" : "hover:bg-red-50 text-gray-300 hover:text-red-500"
                             )}
                         >

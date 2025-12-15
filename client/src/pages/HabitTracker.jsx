@@ -162,8 +162,6 @@ export default function HabitTracker() {
     },
   });
 
-  if (isLoading) return <SkeletonHabitTracker />;
-
   // Filter habits for current view properties
   const filteredHabits = habits; // We filter per row for grid, or per card for list.
   
@@ -172,6 +170,9 @@ export default function HabitTracker() {
     habits?.filter(h => isHabitScheduledForDate(h, currentDate)) || [],
     [habits, currentDate]
   );
+
+  // Early return AFTER all hooks to comply with Rules of Hooks
+  if (isLoading) return <SkeletonHabitTracker />;
 
   return (
     <div className="max-w-7xl mx-auto pb-10 animate-fade-in">
