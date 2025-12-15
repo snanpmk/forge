@@ -33,7 +33,7 @@ router.get('/dashboard', async (req, res) => {
     const [habits, prayers, tasks, finances] = await Promise.all([
         Habit.find({ user: targetUserId }),
         Prayer.find({ user: targetUserId, date: { $gte: startDate } }),
-        Task.find({ user: targetUserId, completed: true, updatedAt: { $gte: startDate } }), // Assuming updatedAt is completion time roughly
+        Task.find({ user: targetUserId, status: 'completed', completed_at: { $gte: startDate } }),
         Finance.find({ user: targetUserId, date: { $gte: startDate } })
     ]);
 
@@ -60,7 +60,7 @@ router.get('/dashboard', async (req, res) => {
                  .reduce((acc, f) => acc + f.amount, 0);
 
             // 2. Tasks
-            const monthTasks = tasks.filter(t => isSameMonth(new Date(t.updatedAt), currentMonth)).length;
+            const monthTasks = tasks.filter(t => isSameMonth(new Date(t.completed_at), currentMonth)).length;
 
             trendData.push({
                 date: monthStr,
@@ -101,7 +101,7 @@ router.get('/dashboard', async (req, res) => {
             const prayerScore = Math.round((prayerPoints / 5) * 100);
     
             // 3. Tasks
-            const dayTasks = tasks.filter(t => isSameDay(new Date(t.updatedAt), currentDate)).length;
+            const dayTasks = tasks.filter(t => isSameDay(new Date(t.completed_at), currentDate)).length;
 
             // 4. Finance
             const dayExpenses = finances
