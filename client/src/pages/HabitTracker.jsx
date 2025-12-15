@@ -67,6 +67,42 @@ export default function HabitTracker() {
     },
   });
 
+  // Calculate streak helper (Client-side mirror of backend)
+  const calculateStreak = (logs) => {
+    if (!logs || logs.length === 0) return 0;
+    
+    // Normalize dates to YYYY-MM-DD
+    const completedDates = logs
+      .filter(l => l.completed)
+      .map(l => {
+        const d = new Date(l.date);
+        return format(d, 'yyyy-MM-dd');
+      })
+      .sort((a, b) => b.localeCompare(a)); // Descending order
+
+    const uniqueDates = [...new Set(completedDates)];
+    if (uniqueDates.length === 0) return 0;
+
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const yesterday = format(subDays(new Date(), 1), 'yyyy-MM-dd');
+
+    // If last completion was before yesterday, streak is broken
+    if (uniqueDates[0] < yesterday) return 0;
+
+    let streak = 0;
+    let expectedDate = uniqueDates[0];
+
+    for (let date of uniqueDates) {
+      if (date === expectedDate) {
+        streak++;
+        expectedDate = format(subDays(new Date(expectedDate), 1), 'yyyy-MM-dd');
+      } else {
+        break;
+      }
+    }
+    return streak;
+  };
+
   const toggleMutation = useMutation({
     mutationFn: async ({ id, date, completed }) => {
         const dateStr = format(date, 'yyyy-MM-dd');
@@ -74,13 +110,9 @@ export default function HabitTracker() {
         return api.put(`/habits/${id}/log`, { date: dateStr, completed, timezoneOffset });
     },
     onMutate: async ({ id, date, completed }) => {
-      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
       await queryClient.cancelQueries({ queryKey: ['habits'] });
-
-      // Snapshot the previous value
       const previousHabits = queryClient.getQueryData(['habits']);
 
-      // Optimistically update to the new value
       queryClient.setQueryData(['habits'], (old) => {
         return old.map((habit) => {
           if (habit._id === id) {
@@ -91,18 +123,20 @@ export default function HabitTracker() {
 
             let newLogs = [...habit.logs];
             if (existingLogIndex > -1) {
-               newLogs[existingLogIndex] = { ...newLogs[existingLogIndex], completed };
+               newLogs[existingLogIndex] = { ...newLogs[existingLogIndex], completed, date: date };
             } else {
                newLogs.push({ date: date, completed });
             }
             
-            return { ...habit, logs: newLogs };
+            // Recalculate streak optimistically
+            const newStreak = calculateStreak(newLogs);
+            
+            return { ...habit, logs: newLogs, streak: newStreak };
           }
           return habit;
         });
       });
 
-      // Return a context object with the snapshotted value
       return { previousHabits };
     },
     onError: (err, newTodo, context) => {
@@ -110,6 +144,10 @@ export default function HabitTracker() {
       toast.error('Failed to update habit');
     },
     onSettled: () => {
+      // We don't necessarily need to invalidate immediately if we trust our logic,
+      // but it's good practice for eventual consistency.
+      // To make it feel "instant" and "disabled" only when necessary:
+      // We will suppress the loading state in the UI via optimistic updates being truthy.
       queryClient.invalidateQueries({ queryKey: ['habits'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },

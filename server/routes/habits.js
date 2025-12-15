@@ -118,7 +118,7 @@ router.put('/:id/log', async (req, res) => {
     });
 
     let xpAwarded = 0;
-    let gamificationResult = null;
+
 
     if (matchingLogIndices.length > 0) {
       // Update ALL matching logs (this fixes duplicates/ghost logs)
@@ -148,14 +148,18 @@ router.put('/:id/log', async (req, res) => {
     // Recalculate streak
     habit.streak = calculateStreak(habit.logs);
     
-    await habit.save();
+    // Optimize: Run DB writes in parallel
+    const savePromise = habit.save();
+    let gamificationPromise = Promise.resolve(null);
 
     if (xpAwarded > 0) {
         const userId = req.user ? req.user.id : (await require('../models/User').findOne())._id;
-        gamificationResult = await addXP(userId, xpAwarded);
+        gamificationPromise = addXP(userId, xpAwarded);
     }
 
-    res.json({ ...habit.toObject(), gamification: gamificationResult ? { xpAdded: xpAwarded, ...gamificationResult } : null });
+    const [savedHabit, gamificationResult] = await Promise.all([savePromise, gamificationPromise]);
+
+    res.json({ ...savedHabit.toObject(), gamification: gamificationResult ? { xpAdded: xpAwarded, ...gamificationResult } : null });
   } catch (err) {
     console.error(err);
     res.status(400).json({ message: err.message });
