@@ -50,6 +50,10 @@ const TaskSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  completed_at: {
+    type: Date,
+    default: null,
+  },
   subtasks: [{
     title: { type: String, required: true },
     completed: { type: Boolean, default: false }

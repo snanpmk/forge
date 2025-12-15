@@ -48,15 +48,30 @@ const { addXP } = require('../utils/gamification');
      const oldTask = await Task.findOne({ _id: req.params.id, user: req.user.id });
      if (!oldTask) return res.status(404).json({ message: 'Task not found' });
 
+     const updateData = { ...req.body };
+     
+     // Handle completion status change
+     if (updateData.status === 'completed' || updateData.status === 'done') {
+        // Ensure we normalize status to 'completed' if that's the standard, but 'done' is used in check later
+        // The schema enum allows 'pending', 'in-progress', 'completed'. 
+        // Code checks for 'done' later (line 59), which seems like a mismatch/bug I should fix too.
+        // Schema says: enum: ['pending', 'in-progress', 'completed']
+        // Route line 59 says: if (oldTask.status !== 'done' && task.status === 'done')
+        // So 'done' is likely wrong. I should stick to 'completed'.
+        updateData.completed_at = new Date();
+     } else if (updateData.status && updateData.status !== 'completed') {
+        updateData.completed_at = null;
+     }
+
      const task = await Task.findOneAndUpdate(
          { _id: req.params.id, user: req.user.id },
-         req.body,
+         updateData,
          { new: true }
      );
     if (!task) return res.status(404).json({ message: 'Task not found' });
 
-    // Check if status changed to 'done'
-    if (oldTask.status !== 'done' && task.status === 'done') {
+    // Check if status changed to 'completed'
+    if (oldTask.status !== 'completed' && task.status === 'completed') {
         // Since we don't have user auth on tasks route yet, we might fail here.
         // But for now, let's assume we will add auth middleware to tasks too.
         // If not, we need a way to know WHO completed the task.

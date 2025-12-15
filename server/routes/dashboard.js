@@ -85,11 +85,7 @@ router.get('/summary', async (req, res) => {
             user: targetUserId,
             $or: [
                 { due_date: { $gte: todayStart, $lte: todayEnd }, status: { $ne: 'completed' } }, // Due today, not done
-                { status: 'completed', created_at: { $gte: todayStart, $lte: todayEnd } } // Done today (assuming created_at approx updated_at for now, better to match `updatedAt` if schema had it, falling back to simple "Due Today & Completed" logic or just 'Due Today')
-                // Re-reading Schema: Task has `created_at` but no explicit `updated_at`. 
-                // Let's rely on: Due Date for everything.
-                // "Upcoming" = Due Today & Pending.
-                // "Done" = Due Today & Completed.
+                { status: 'completed', completed_at: { $gte: todayStart, $lte: todayEnd } } // Done today
             ]
         }).sort({ priority: -1, due_date: 1 }),
         

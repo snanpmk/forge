@@ -70,7 +70,7 @@ export default function Dashboard() {
                       <div className="p-2 bg-purple-50 text-purple-600 rounded-lg"><CheckCircle size={20} /></div>
                   </div>
                   <div className="text-3xl font-display font-bold text-gray-800 mt-2">
-                       {tasks?.doneCount || 0}
+                       {tasks?.doneCount || 0} <span className="text-lg text-gray-400 font-medium">/ {tasks?.total || 0}</span>
                   </div>
               </div>
 
