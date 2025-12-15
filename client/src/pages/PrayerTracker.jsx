@@ -1,32 +1,63 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
-import { Sun, Moon, Cloud, Sunrise, Sunset, ChevronLeft, ChevronRight, Check, X } from 'lucide-react';
+import { Sun, Moon, Cloud, Sunrise, Sunset, ChevronLeft, ChevronRight, Check, X, MapPin, Clock } from 'lucide-react';
 import { 
     format, addDays, subDays, isSameDay, isToday, 
     startOfWeek, endOfWeek, startOfMonth, endOfMonth, 
-    eachDayOfInterval, addWeeks, subWeeks, addMonths, subMonths 
+    eachDayOfInterval, addWeeks, subWeeks, addMonths, subMonths,
+    isAfter, isBefore, differenceInSeconds
 } from 'date-fns';
 import clsx from 'clsx';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import SkeletonPrayerTracker from '../components/skeletons/SkeletonPrayerTracker';
+import axios from 'axios';
 
-const PRAYERS = [
-  { name: 'Fajr', icon: Sunrise },
-  { name: 'Dhuhr', icon: Sun },
-  { name: 'Asr', icon: Cloud },
-  { name: 'Maghrib', icon: Sunset },
-  { name: 'Isha', icon: Moon },
+const PRAYERS_CONFIG = [
+  { name: 'Fajr', icon: Sunrise, key: 'Fajr', endKey: 'Sunrise' },
+  { name: 'Dhuhr', icon: Sun, key: 'Dhuhr', endKey: 'Asr' },
+  { name: 'Asr', icon: Cloud, key: 'Asr', endKey: 'Maghrib' },
+  { name: 'Maghrib', icon: Sunset, key: 'Maghrib', endKey: 'Isha' },
+  { name: 'Isha', icon: Moon, key: 'Isha', endKey: 'Fajr' }, // Handled specially for next day
 ];
 
 export default function PrayerTracker() {
   const queryClient = useQueryClient();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState('today'); // 'today' | 'week' | 'month'
+  const [location, setLocation] = useState(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Timer for countdown
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
   
   // Selection State
   const [activePrayer, setActivePrayer] = useState(null); // { name: 'Fajr', rect: DOMRect }
   const isMobile = useMediaQuery('(max-width: 768px)');
+
+  // Get User Location
+  useEffect(() => {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                setLocation({
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude
+                });
+            },
+            (error) => {
+                console.error("Error getting location:", error);
+                // Fallback (e.g., Calicut/Kerala coordinates or IP based via API default)
+                // Using a default generic location if blocked, or letting API guess by IP if we omitted params, 
+                // but aladhan requires params or city. Let's default to a known location if failed or keep null to try IP based if api supports it (it doesn't easily without city).
+                // For now, we'll just leave it null and handle loading state or prompt.
+            }
+        );
+    }
+  }, []);
 
   // Generate days for grid
   const gridDays = useMemo(() => {
@@ -54,7 +85,48 @@ export default function PrayerTracker() {
       else setCurrentDate(prev => viewMode === 'week' ? addWeeks(prev, 1) : addMonths(prev, 1));
   };
 
-  // Fetch Prayers
+  // Fetch Prayer Times (External API)
+  const { data: prayerTimesData } = useQuery({
+      queryKey: ['external-prayer-times', currentDate.toISOString().split('T')[0], location],
+      queryFn: async () => {
+          if (!location) return null;
+          // Fetching for the specific date
+          const dateStr = format(currentDate, 'dd-MM-yyyy'); // Aladhan format
+          const response = await axios.get('https://api.aladhan.com/v1/timings/' + dateStr, {
+              params: {
+                  latitude: location.latitude,
+                  longitude: location.longitude,
+                  method: 2, // ISNA usually, or 1 (Egyptian), 3 (Muslim World League). Let's use 2 or make generic. 
+                  // 2 is ISNA. 3 is Muslim World League.
+                  // Defaulting to auto-detection/general ISNA might be safe, or 3. 
+                  // Let's stick to standard params.
+              }
+          });
+          return response.data.data;
+      },
+      enabled: !!location
+  });
+
+  // Also need next day Fajr for Isha countdown
+   const { data: nextDayPrayerTimes } = useQuery({
+      queryKey: ['external-prayer-times-next', addDays(currentDate, 1).toISOString().split('T')[0], location],
+      queryFn: async () => {
+          if (!location) return null;
+          const dateStr = format(addDays(currentDate, 1), 'dd-MM-yyyy');
+          const response = await axios.get('https://api.aladhan.com/v1/timings/' + dateStr, {
+              params: {
+                  latitude: location.latitude,
+                  longitude: location.longitude,
+                  method: 2, 
+              }
+          });
+          return response.data.data;
+      },
+      enabled: !!location && viewMode === 'today' // Only needed for today view really
+  });
+
+
+  // Fetch User Records (Our Backend)
   const { data: prayers, isLoading } = useQuery({
     queryKey: ['prayers', viewMode, currentDate.toISOString(), gridDays[0]?.toISOString()],
     queryFn: async () => {
@@ -104,12 +176,84 @@ export default function PrayerTracker() {
       statusMutation.mutate({ name: activePrayer.name, status, date: currentDate, type });
   };
 
+  const formatCountdown = (seconds) => {
+    if (seconds <= 0) return 'Missed';
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return `${h}h ${m}m ${s}s`;
+  };
+
+  const getPrayerTimeInfo = (prayerKey, endKey, timings, nextDayTimings) => {
+      if (!timings) return { time: '--:--', timeLeft: null, status: 'unknown' };
+
+      const timeStr = timings.timings[prayerKey]; // "05:30"
+      if (!timeStr) return { time: '--:--', timeLeft: null };
+
+      // Parse current prayer time
+      const [h, m] = timeStr.split(':').map(Number);
+      const prayerDate = new Date(currentDate);
+      prayerDate.setHours(h, m, 0, 0);
+
+      // Determine End Time (Kalah)
+      let endDate = new Date(currentDate);
+      let endTimeStr = timings.timings[endKey]; // "18:45"
+      
+      // Special case for Isha ending at Fajr next day
+      if (prayerKey === 'Isha' && endKey === 'Fajr') {
+          if (nextDayTimings) {
+             const [nextH, nextM] = nextDayTimings.timings['Fajr'].split(':');
+             endDate = addDays(currentDate, 1);
+             endDate.setHours(nextH, nextM, 0, 0);
+          } else {
+             // Fallback if next day not loaded yet, assume same time approximately or skip
+              return { time: timeStr, timeLeft: null, isCurrent: false };
+          }
+      } else {
+          // Standard case
+          const [endH, endM] = endTimeStr.split(':');
+          endDate.setHours(endH, endM, 0, 0);
+      }
+      
+      const now = new Date();
+      // Check if this prayer window is currently active
+      // It is active if NOW is between prayerDate and endDate
+      // BUT we only show countdown if it is technically 'time for this prayer'
+      
+      // Calculate seconds remaining until 'Kalah'
+      const secondsLeft = differenceInSeconds(endDate, now);
+      
+      const isWindowActive = isAfter(now, prayerDate) && isBefore(now, endDate);
+      const isUpcoming = isBefore(now, prayerDate);
+      
+      return {
+          time: timeStr,
+          timeLeft: isWindowActive ? secondsLeft : null,
+          isCurrent: isWindowActive,
+          isUpcoming
+      };
+  };
+
   if (isLoading) return <SkeletonPrayerTracker />;
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-10 relative pointer-events-auto animate-fade-in" onClick={() => setActivePrayer(null)}>
        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
-        <h1 className="text-3xl sm:text-4xl font-bold self-start md:self-auto soft-gradient-text tracking-tight">Prayer Tracker</h1>
+        <div className="flex flex-col items-start gap-1 w-full md:w-auto">
+            <h1 className="text-3xl sm:text-4xl font-bold self-start soft-gradient-text tracking-tight">Prayer Tracker</h1>
+            {location && (
+                <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-50 px-2 py-1 rounded-md border border-gray-100/50">
+                    <MapPin size={12} className="text-primary/70" />
+                    <span>Location Active</span>
+                </div>
+            )}
+             {!location && (
+                <button onClick={() => window.location.reload()} className="flex items-center gap-1.5 text-xs font-medium text-red-500 bg-red-50 px-2 py-1 rounded-md border border-red-100 hover:bg-red-100 cursor-pointer">
+                    <MapPin size={12} />
+                    <span>Enable Location</span>
+                </button>
+            )}
+        </div>
         
         {/* Controls */}
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
@@ -149,11 +293,87 @@ export default function PrayerTracker() {
       </div>
 
       {viewMode === 'today' && (
-          <PrayerTodayList 
-             prayers={PRAYERS} 
-             getPrayerRecord={(name) => getPrayerRecord(name, currentDate)}
-             onCardClick={handleCardClick}
-          />
+          <div className="space-y-4 max-w-2xl mx-auto">
+             {/* Global Countdown Card (Optional - showing next prayer or current active) */}
+             
+             {PRAYERS_CONFIG.map(({ name, icon: Icon, key, endKey }, idx) => {
+                const record = getPrayerRecord(name, currentDate);
+                const status = record?.status || 'pending';
+                const type = record?.type || 'normal';
+                
+                // Get Time Info
+                const { time, timeLeft, isCurrent } = getPrayerTimeInfo(key, endKey, prayerTimesData, nextDayPrayerTimes);
+
+                return (
+                    <div 
+                    key={name}
+                    onClick={(e) => handleCardClick(e, name)}
+                    className={clsx(
+                        "cursor-pointer group relative overflow-hidden transition-all duration-300 rounded-3xl p-6 shadow-sm hover:shadow-soft hover:scale-[1.02] border animate-fade-in",
+                        status === 'on-time' ? "bg-gradient-to-br from-wellness-mint to-teal-50 border-teal-100" : 
+                        status === 'missed' ? "bg-wellness-rose/30 border-red-100" : 
+                        isCurrent ? "bg-blue-50/50 border-blue-200 ring-1 ring-blue-100" :
+                        "bg-white border-gray-100 hover:border-gray-200"
+                    )}
+                    style={{ animationDelay: `${idx * 100}ms` }}
+                    >
+                        {isCurrent && (
+                            <div className="absolute top-0 left-0 w-1 h-full bg-blue-500" />
+                        )}
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full blur-3xl -mr-10 -mt-10" />
+                    
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 z-10 relative">
+                            <div className="flex items-center gap-5">
+                                <div className={clsx(
+                                    "p-3 rounded-2xl transition-colors shrink-0", 
+                                    status === 'on-time' ? "bg-teal-500 text-white shadow-md" : 
+                                    isCurrent ? "bg-blue-500 text-white shadow-md" :
+                                    "bg-gray-100 text-gray-400 group-hover:bg-gray-200 group-hover:text-gray-600"
+                                )}>
+                                    <Icon size={24} weight={(status === 'on-time' || isCurrent) ? "fill" : "regular"} />
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-3">
+                                        <span className={clsx("text-xl font-bold", status === 'on-time' ? "text-teal-900" : "text-primary")}>{name}</span>
+                                        {time !== '--:--' && (
+                                            <span className="text-sm font-semibold text-gray-400 font-mono bg-gray-50 px-2 py-0.5 rounded-md border border-gray-100">
+                                                {time}
+                                            </span>
+                                        )}
+                                    </div>
+                                    
+                                    {/* Additional Status Text */}
+                                    {status === 'on-time' && type !== 'normal' && (
+                                        <span className="mt-1 inline-block px-2 py-0.5 rounded-lg text-[10px] font-bold bg-white/40 border border-white/20 uppercase text-teal-800 tracking-wider">
+                                            {type === 'jamm-kasar' ? 'Jamm + Kasar' : type}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                    
+                            <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                                {/* Timer Display if active and pending */}
+                                {isCurrent && status === 'pending' && timeLeft !== null && (
+                                    <div className="flex items-center gap-2 text-blue-600 bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-100 shadow-sm animate-pulse-slow">
+                                        <Clock size={16} />
+                                        <div className="flex flex-col items-start leading-none">
+                                            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400">Time Left</span>
+                                            <span className="text-sm font-monofont-bold font-mono min-w-[70px]">{formatCountdown(timeLeft)}</span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+                                    {status === 'on-time' && <span className="text-teal-600 flex items-center gap-1"><Check size={16} /> Completed</span>}
+                                    {status === 'missed' && <span className="text-red-500 bg-red-100 px-3 py-1 rounded-lg">Missed</span>}
+                                    {status === 'pending' && !isCurrent && <span className="text-muted bg-gray-50 px-3 py-1 rounded-lg group-hover:bg-gray-100 transition-colors">Pending</span>}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })}
+          </div>
       )}
 
       {/* Selection Menu (Bottom Sheet on Mobile, Popover on Desktop) */}
@@ -168,7 +388,7 @@ export default function PrayerTracker() {
 
       {viewMode !== 'today' && (
         <PrayerGrid 
-            prayers={PRAYERS}
+            prayers={PRAYERS_CONFIG}
             gridDays={gridDays}
             getPrayerRecord={getPrayerRecord}
             onStatusToggle={(name, day, status) => {
@@ -184,54 +404,6 @@ export default function PrayerTracker() {
 
 
 // Sub-components
-
-function PrayerTodayList({ prayers, getPrayerRecord, onCardClick }) {
-    return (
-        <div className="space-y-4 max-w-2xl mx-auto">
-        {prayers.map(({ name, icon: Icon }, idx) => {
-          const record = getPrayerRecord(name);
-          const status = record?.status || 'pending';
-          const type = record?.type || 'normal';
-
-          return (
-            <div 
-              key={name}
-              onClick={(e) => onCardClick(e, name)}
-              className={clsx(
-                "cursor-pointer group relative overflow-hidden transition-all duration-300 rounded-3xl p-6 flex items-center justify-between shadow-sm hover:shadow-soft hover:scale-[1.02] border animate-fade-in",
-                status === 'on-time' ? "bg-gradient-to-br from-wellness-mint to-teal-50 border-teal-100" : 
-                status === 'missed' ? "bg-wellness-rose/30 border-red-100" : 
-                "bg-white border-gray-100 hover:border-gray-200"
-              )}
-              style={{ animationDelay: `${idx * 100}ms` }}
-            >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full blur-3xl -mr-10 -mt-10" />
-              
-              <div className="flex items-center gap-5 z-10">
-                <div className={clsx("p-3 rounded-2xl transition-colors", status === 'on-time' ? "bg-teal-500 text-white shadow-md" : "bg-gray-100 text-gray-400 group-hover:bg-gray-200 group-hover:text-gray-600")}>
-                    <Icon size={24} weight={status === 'on-time' ? "fill" : "regular"} />
-                </div>
-                <div>
-                    <span className={clsx("text-xl font-bold block", status === 'on-time' ? "text-teal-900" : "text-primary")}>{name}</span>
-                    {status === 'on-time' && type !== 'normal' && (
-                        <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-white/40 border border-white/20 uppercase text-teal-800 tracking-wider">
-                            {type === 'jamm-kasar' ? 'Jamm + Kasar' : type}
-                        </span>
-                    )}
-                </div>
-              </div>
-              
-              <div className="z-10 text-sm font-bold uppercase tracking-wider flex items-center gap-2">
-                {status === 'on-time' && <span className="text-teal-600 flex items-center gap-1"><Check size={16} /> Completed</span>}
-                {status === 'missed' && <span className="text-red-500 bg-red-100 px-3 py-1 rounded-lg">Missed</span>}
-                {status === 'pending' && <span className="text-muted bg-gray-50 px-3 py-1 rounded-lg group-hover:bg-gray-100 transition-colors">Pending</span>}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-}
 
 function PrayerStatusMenu({ activePrayer, onSubmit, onClose, isMobile }) {
     if (!activePrayer) return null;
