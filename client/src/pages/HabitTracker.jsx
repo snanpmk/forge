@@ -73,9 +73,45 @@ export default function HabitTracker() {
         const timezoneOffset = new Date().getTimezoneOffset();
         return api.put(`/habits/${id}/log`, { date: dateStr, completed, timezoneOffset });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['habits']);
-      queryClient.invalidateQueries(['dashboard']);
+    onMutate: async ({ id, date, completed }) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: ['habits'] });
+
+      // Snapshot the previous value
+      const previousHabits = queryClient.getQueryData(['habits']);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(['habits'], (old) => {
+        return old.map((habit) => {
+          if (habit._id === id) {
+            const dateStr = format(date, 'yyyy-MM-dd');
+            const existingLogIndex = habit.logs.findIndex((log) => 
+               isSameDay(new Date(log.date), date)
+            );
+
+            let newLogs = [...habit.logs];
+            if (existingLogIndex > -1) {
+               newLogs[existingLogIndex] = { ...newLogs[existingLogIndex], completed };
+            } else {
+               newLogs.push({ date: date, completed });
+            }
+            
+            return { ...habit, logs: newLogs };
+          }
+          return habit;
+        });
+      });
+
+      // Return a context object with the snapshotted value
+      return { previousHabits };
+    },
+    onError: (err, newTodo, context) => {
+      queryClient.setQueryData(['habits'], context.previousHabits);
+      toast.error('Failed to update habit');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['habits'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 
