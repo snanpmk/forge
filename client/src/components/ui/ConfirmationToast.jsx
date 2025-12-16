@@ -4,45 +4,43 @@ import { AlertCircle } from 'lucide-react';
 
 export const confirmAction = (message, onConfirm) => {
   toast.custom((t) => (
-    <div
-      className={`${
-        t.visible ? 'animate-enter' : 'animate-leave'
-      } max-w-md w-full bg-white shadow-soft rounded-2xl pointer-events-auto flex ring-1 ring-black ring-opacity-5 overflow-hidden`}
-    >
-      <div className="flex-1 w-full p-4">
-        <div className="flex items-center">
-          <div className="flex-shrink-0">
-             <div className="h-10 w-10 full rounded-full bg-red-50 flex items-center justify-center text-red-500">
-                <AlertCircle size={20} />
-             </div>
-          </div>
-          <div className="ml-3 flex-1">
-            <p className="text-sm font-bold text-gray-900">
-              Are you sure?
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/5 bg-opacity-10 backdrop-blur-sm animate-fade-in w-screen h-screen -m-4">
+        {/* Click outside to dismiss */}
+        <div className="absolute inset-0" onClick={() => toast.dismiss(t.id)} />
+        
+        {/* Actual Toast Card */}
+        <div
+          className={`${
+            t.visible ? 'animate-zoom-in' : 'animate-zoom-out'
+          } max-w-sm w-full bg-white shadow-2xl rounded-3xl pointer-events-auto flex flex-col items-center p-6 relative z-10 border border-white/50`}
+        >
+            <div className="h-16 w-16 mb-4 rounded-full bg-red-50 flex items-center justify-center text-red-500 shadow-inner">
+                <AlertCircle size={28} />
+            </div>
+            
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Are you sure?</h3>
+            <p className="text-sm text-gray-500 text-center mb-8 px-4 font-medium">
+                {message}
             </p>
-            <p className="mt-1 text-sm text-gray-500">
-              {message}
-            </p>
-          </div>
+
+            <div className="flex w-full gap-3">
+                <button
+                onClick={() => toast.dismiss(t.id)}
+                className="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-all active:scale-95"
+                >
+                Cancel
+                </button>
+                <button
+                onClick={() => {
+                    toast.dismiss(t.id);
+                    onConfirm();
+                }}
+                className="flex-1 py-3 px-4 bg-black text-white hover:bg-gray-900 shadow-lg shadow-black/20 font-bold rounded-xl transition-all active:scale-95"
+                >
+                Confirm
+                </button>
+            </div>
         </div>
-      </div>
-      <div className="flex flex-col border-l border-gray-100 bg-gray-50">
-        <button
-          onClick={() => {
-            toast.dismiss(t.id);
-            onConfirm();
-          }}
-          className="w-full border-b border-gray-100 p-4 flex items-center justify-center text-sm font-bold text-red-600 hover:text-red-500 hover:bg-red-50 transition-colors focus:outline-none"
-        >
-          Yes
-        </button>
-        <button
-          onClick={() => toast.dismiss(t.id)}
-          className="w-full p-4 flex items-center justify-center text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors focus:outline-none"
-        >
-          No
-        </button>
-      </div>
     </div>
-  ), { duration: 5000 });
+  ), { duration: Infinity, position: 'top-center' }); // Infinite duration so it stays until action
 };

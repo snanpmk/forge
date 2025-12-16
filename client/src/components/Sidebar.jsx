@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, CheckSquare, Target, Brain, DollarSign, Sun, X, Calendar, Shield, FileText, LogOut, Settings as SettingsIcon } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, Target, Brain, DollarSign, Sun, X, Calendar, Shield, FileText, LogOut, Settings as SettingsIcon, ShoppingCart } from 'lucide-react';
 import clsx from 'clsx';
 import UserLevel from './UserLevel';
 import { useAuth } from '../context/AuthContext';
@@ -73,6 +73,7 @@ export default function Sidebar({ isOpen, onClose }) {
           <NavItem to="/goals" icon={Target} label="Goals" onClick={onClose} />
           <NavItem to="/dump" icon={Brain} label="Dump" onClick={onClose} />
           <NavItem to="/finance" icon={DollarSign} label="Finance" onClick={onClose} />
+          <NavItem to="/shopping" icon={ShoppingCart} label="Shopping" onClick={onClose} />
           <div className="border-t border-gray-200 my-2 pt-2 w-10 mx-auto"></div>
           <NavItem to="/settings" icon={SettingsIcon} label="Settings" onClick={onClose} />
           <NavItem to="/privacy" icon={Shield} label="Privacy" onClick={onClose} />

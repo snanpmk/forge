@@ -37,6 +37,7 @@ app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/prayers', require('./routes/prayers'));
 app.use('/api/tasks', require('./routes/tasks'));
 app.use('/api/user', require('./routes/user'));
+app.use('/api/shopping', require('./routes/shopping'));
 
 // Serve Static Assets in Production
 if (process.env.NODE_ENV === 'production') {

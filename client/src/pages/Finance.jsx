@@ -197,10 +197,10 @@ export default function Finance() {
       </div>
 
       {activeTab === 'analytics' && (
-         <FinanceAnalytics transactions={transactions} />
+         <FinanceAnalytics transactions={transactions} budgets={budgets} />
       )}
 
-      {activeTab === 'transactions' ? (
+      {activeTab === 'transactions' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fade-in">
 
           {/* Left Col: Form and Summary */}
@@ -391,21 +391,21 @@ export default function Finance() {
                   return (
                   <div 
                     key={t._id} 
-                    className="group bg-white border border-gray-100 p-4 rounded-2xl flex items-center justify-between hover:border-gray-300 hover:shadow-soft transition-all animate-slide-up"
+                    className="group bg-white border border-gray-100 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between hover:border-gray-300 hover:shadow-soft transition-all animate-slide-up gap-3 sm:gap-4"
                     style={{ animationDelay: `${idx * 50}ms` }}
                   >
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4 w-full sm:w-auto">
                       <div className={clsx(
-                        "w-12 h-12 rounded-2xl flex items-center justify-center transition-colors",
+                        "w-12 h-12 rounded-2xl flex items-center justify-center transition-colors flex-shrink-0",
                         isPositive ? "bg-green-50 text-green-600 group-hover:bg-green-100" : "bg-red-50 text-red-600 group-hover:bg-red-100"
                       )}>
                         {isPositive ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
                       </div>
-                      <div>
+                      <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-bold text-gray-900">{t.category}</span>
+                          <span className="font-bold text-gray-900 truncate">{t.category}</span>
                           <span className={clsx(
-                              "text-[10px] px-2 py-0.5 rounded-md uppercase tracking-wide font-bold",
+                              "text-[10px] px-2 py-0.5 rounded-md uppercase tracking-wide font-bold flex-shrink-0",
                               isPositive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
                           )}>
                             {t.type}
@@ -413,8 +413,8 @@ export default function Finance() {
                         </div>
                         {/* Details Row */}
                         <div className="text-xs text-gray-500 mt-1 flex items-center gap-2">
-                            <span className="font-mono">{format(new Date(t.date), 'MMM d')}</span>
-                            {(t.related_entity || t.description) && <span className="w-1 h-1 rounded-full bg-gray-300" />}
+                            <span className="font-mono flex-shrink-0">{format(new Date(t.date), 'MMM d')}</span>
+                            {(t.related_entity || t.description) && <span className="w-1 h-1 rounded-full bg-gray-300 flex-shrink-0" />}
                             <span className="truncate max-w-[150px] sm:max-w-[300px]">
                                 {t.related_entity && <span className="font-bold text-gray-700 mr-1">{t.related_entity}</span>}
                                 {t.description}
@@ -422,14 +422,14 @@ export default function Finance() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <span className={clsx("font-mono font-bold whitespace-nowrap text-lg", isPositive ? "text-green-600" : "text-gray-900")}>
+                    <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto border-t sm:border-none pt-2 sm:pt-0 border-gray-50">
+                      <span className={clsx("font-mono font-bold whitespace-nowrap text-base sm:text-lg", isPositive ? "text-green-600" : "text-gray-900")}>
                         {isPositive ? '+' : '-'}₹{t.amount.toLocaleString('en-IN')}
                       </span>
                       <button 
                         onClick={() => confirmAction('Delete this transaction?', () => deleteTransactionMutation.mutate(t._id))}
                         disabled={deleteTransactionMutation.isLoading || deleteTransactionMutation.isPending}
-                        className="opacity-0 group-hover:opacity-100 p-2 text-gray-300 hover:text-red-500 transition-all hover:bg-red-50 rounded-lg transform scale-90 active:scale-95 disabled:opacity-50"
+                        className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 p-2 text-gray-300 hover:text-red-500 transition-all hover:bg-red-50 rounded-lg transform active:scale-95 disabled:opacity-50"
                         title="Delete"
                       >
                         <Trash2 size={18} />
@@ -441,7 +441,10 @@ export default function Finance() {
             </div>
           </div>
         </div>
-      ) : (
+
+      )}
+
+      {activeTab === 'budget' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fade-in">
            {/* Budget Planning Form */}
            <div className="space-y-6">

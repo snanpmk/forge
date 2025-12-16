@@ -6,7 +6,8 @@ import {
 import { format, subDays, isSameDay } from 'date-fns';
 import clsx from 'clsx';
 
-export default function FinanceAnalytics({ transactions }) {
+export default function FinanceAnalytics(props) {
+  const { transactions } = props;
   if (!transactions || transactions.length === 0) return null;
 
   // 1. Spending by Category (Pie Chart)
@@ -133,6 +134,66 @@ export default function FinanceAnalytics({ transactions }) {
           </ResponsiveContainer>
         </div>
       </div>
+      
+      {/* 3. Budget vs Actuals */}
+      {props.budgets && props.budgets.length > 0 && (
+          <div className="card h-80 sm:h-96 flex flex-col lg:col-span-2">
+            <h3 className="font-bold text-lg mb-4">Budget Performance</h3>
+            <div className="flex-1 w-full min-h-0">
+               <ResponsiveContainer width="100%" height="100%">
+                   <BarChart 
+                        data={props.budgets.map(b => {
+                           // Calculate spent for this budget category from all transactions in current view
+                           // Note: In real app, might want to ensure 'transactions' prop covers full month
+                           const spent = transactions
+                                .filter(t => t.type === 'expense' && t.category === b.category)
+                                .reduce((sum, t) => sum + t.amount, 0);
+                           return {
+                               category: b.category,
+                               limit: b.limit,
+                               spent: spent,
+                               remaining: Math.max(0, b.limit - spent)
+                           };
+                        })} 
+                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                        barGap={0}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                      <XAxis dataKey="category" fontSize={11} tickLine={false} axisLine={false} />
+                      <YAxis fontSize={11} tickLine={false} axisLine={false} tickFormatter={(val) => `₹${val}`} />
+                      <Tooltip 
+                        cursor={{fill: '#f9fafb'}}
+                        content={({ active, payload, label }) => {
+                            if (active && payload && payload.length) {
+                                return (
+                                    <div className="bg-white p-3 border border-gray-100 shadow-xl rounded-xl">
+                                        <p className="font-bold text-xs mb-2 text-primary">{label}</p>
+                                        <div className="space-y-1">
+                                            <div className="flex justify-between gap-4 text-xs">
+                                                <span className="text-gray-500">Budget Limit</span>
+                                                <span className="font-mono font-bold">₹{payload[0].payload.limit}</span>
+                                            </div>
+                                            <div className="flex justify-between gap-4 text-xs">
+                                                <span className="text-gray-500">Spent</span>
+                                                <span className={clsx("font-mono font-bold", payload[0].payload.spent > payload[0].payload.limit ? "text-red-500" : "text-black")}>
+                                                    ₹{payload[0].payload.spent}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )
+                            }
+                            return null;
+                        }}
+                      />
+                      <Legend />
+                      <Bar dataKey="spent" name="Spent" fill="#000000" radius={[4, 4, 0, 0]} barSize={20} />
+                      <Bar dataKey="remaining" name="Remaining Budget" fill="#e5e7eb" radius={[4, 4, 0, 0]} barSize={20} />
+                   </BarChart>
+               </ResponsiveContainer>
+            </div>
+          </div>
+      )}
     </div>
   );
 }

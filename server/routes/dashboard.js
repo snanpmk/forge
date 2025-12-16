@@ -4,8 +4,10 @@ const Prayer = require('../models/Prayer');
 const Goal = require('../models/Goal');
 const BrainDump = require('../models/BrainDump');
 const Finance = require('../models/Finance');
+const Budget = require('../models/Budget');
 const auth = require('../middleware/auth');
 const mongoose = require('mongoose');
+const { format } = require('date-fns');
 
 router.use(auth);
 
@@ -61,7 +63,7 @@ router.get('/summary', async (req, res) => {
     startOfMonth.setHours(0,0,0,0);
 
     // Execute queries in parallel
-    const [habits, prayers, goals, dumpCount, financeData, todaysTasks, todaysExpenses] = await Promise.all([
+    const [habits, prayers, goals, dumpCount, financeData, todaysTasks, todaysExpenses, existingBudgets, categoryExpenses] = await Promise.all([
         // 1. Habits
         Habit.find({ user: targetUserId }),
         // 2. Prayers
@@ -93,6 +95,19 @@ router.get('/summary', async (req, res) => {
         Finance.aggregate([
           { $match: { user: new mongoose.Types.ObjectId(targetUserId), date: { $gte: todayStart, $lte: todayEnd }, type: 'expense' } },
           { $group: { _id: null, total: { $sum: "$amount" } } }
+        ]),
+
+        // 8. Budgets for Current Month
+        Budget.find({ user: targetUserId, month: format(startOfMonth, 'yyyy-MM') }),
+
+        // 9. Expenses by Category for Current Month
+        Finance.aggregate([
+            { $match: { 
+                user: new mongoose.Types.ObjectId(targetUserId), 
+                date: { $gte: startOfMonth },
+                type: 'expense'
+            }},
+            { $group: { _id: "$category", total: { $sum: "$amount" } } }
         ])
     ]);
 
@@ -110,7 +125,6 @@ router.get('/summary', async (req, res) => {
     });
 
     // Process Finance
-    // Process Finance
     const financeSummary = {
       income: financeData.find(f => f._id === 'income')?.total || 0,
       expense: financeData.find(f => f._id === 'expense')?.total || 0,
@@ -124,6 +138,18 @@ router.get('/summary', async (req, res) => {
         doneCount: todaysTasks.filter(t => t.status === 'completed').length,
         total: todaysTasks.length
     };
+
+    // Process Budgets
+    const budgetSummary = existingBudgets.map(budget => {
+        const spent = categoryExpenses.find(c => c._id === budget.category)?.total || 0;
+        return {
+            _id: budget._id,
+            category: budget.category,
+            limit: budget.limit,
+            spent,
+            percentage: Math.min((spent / budget.limit) * 100, 100)
+        };
+    });
 
     // Filter duplicate prayers (prefer 'on-time', then 'missed', then 'pending')
     // We want unique by 'name'
@@ -148,6 +174,7 @@ router.get('/summary', async (req, res) => {
       goals,
       brainDumpCount: dumpCount,
       finance: financeSummary,
+      budgets: budgetSummary,
       tasks: taskSummary
     });
   } catch (err) {

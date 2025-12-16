@@ -22,6 +22,8 @@ const queryClient = new QueryClient();
 
 import SkeletonFullPage from './components/skeletons/SkeletonFullPage';
 
+import ShoppingList from './pages/ShoppingList';
+
 // Protected Route Component
 const ProtectedRoute = () => {
     const { token, loading } = useAuth();
@@ -50,6 +52,7 @@ export default function App() {
                     <Route path="goals" element={<GoalPlanner />} />
                     <Route path="dump" element={<BrainDump />} />
                     <Route path="finance" element={<Finance />} />
+                    <Route path="shopping" element={<ShoppingList />} />
                     <Route path="settings" element={<Settings />} />
                     <Route path="prayer" element={<PrayerTracker />} />
                     <Route path="privacy" element={<AppPrivacy />} />
