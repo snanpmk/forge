@@ -19,7 +19,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 
 const queryClient = new QueryClient();
 
-import Loader from './components/Loader';
+
 import SkeletonFullPage from './components/skeletons/SkeletonFullPage';
 
 // Protected Route Component

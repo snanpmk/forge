@@ -36,7 +36,7 @@
   }
   
   .input-field {
-    @apply w-full bg-gray-50/50 border border-transparent rounded-2xl px-5 py-4 focus:bg-white focus:border-gray-200 focus:ring-4 focus:ring-gray-100/50 outline-none transition-all duration-300 text-primary placeholder:text-gray-400 text-sm font-medium shadow-inner-soft;
+    @apply w-full bg-gray-50/50 border border-transparent rounded-2xl px-5 py-4 focus:bg-white focus:border-gray-200 focus:ring-4 focus:ring-gray-100/50 outline-none transition-all duration-300 text-primary placeholder:text-gray-400 text-base sm:text-sm font-medium shadow-inner-soft;
   }
 
   /* Soft UI Utilities */

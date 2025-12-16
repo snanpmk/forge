@@ -38,7 +38,8 @@ export default function TaskForm({ initialValues, onSubmit, submitLabel = 'Creat
                 <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
                 <input
                     type="date"
-                    className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black/5"
+                    className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-black/5 appearance-none"
+                    style={{ WebkitAppearance: 'none' }}
                     value={taskData.due_date}
                     onChange={e => setTaskData({ ...taskData, due_date: e.target.value })}
                 />

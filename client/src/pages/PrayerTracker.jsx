@@ -26,7 +26,7 @@ export default function PrayerTracker() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState('today'); // 'today' | 'week' | 'month'
   const [location, setLocation] = useState(null);
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [, setCurrentTime] = useState(new Date());
 
   // Timer for countdown
   useEffect(() => {
@@ -128,17 +128,24 @@ export default function PrayerTracker() {
 
   // Fetch User Records (Our Backend)
   const { data: prayers, isLoading } = useQuery({
-    queryKey: ['prayers', viewMode, currentDate.toISOString(), gridDays[0]?.toISOString()],
+    queryKey: ['prayers', viewMode, currentDate.toISOString(), gridDays[0]?.toISOString(), location],
     queryFn: async () => {
-        let url = '';
+        const params = new URLSearchParams();
+        if (location) {
+            params.append('latitude', location.latitude);
+            params.append('longitude', location.longitude);
+        }
+
         if (viewMode === 'today') {
-            url = `/prayers?date=${currentDate.toISOString()}`;
+            params.append('date', currentDate.toISOString());
         } else {
             const start = gridDays[0].toISOString();
             const end = gridDays[gridDays.length - 1].toISOString();
-            url = `/prayers?startDate=${start}&endDate=${end}`;
+            params.append('startDate', start);
+            params.append('endDate', end);
         }
-        const { data } = await api.get(url);
+        
+        const { data } = await api.get(`/prayers?${params.toString()}`);
         return data;
     },
   });

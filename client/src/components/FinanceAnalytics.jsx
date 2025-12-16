@@ -3,7 +3,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell, Legend
 } from 'recharts';
-import { format, subDays, startOfMonth, startOfWeek, isSameDay } from 'date-fns';
+import { format, subDays, isSameDay } from 'date-fns';
 import clsx from 'clsx';
 
 export default function FinanceAnalytics({ transactions }) {

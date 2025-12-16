@@ -135,8 +135,8 @@ export default function GoalForm({ initialValues, onSubmit, submitLabel = 'Creat
                             <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Time-bound (When?)</label>
                             <input 
                             type="date"
-                            className="input-field text-sm w-full"
-                            style={{ minWidth: '100%' }} // Force full width on mobile
+                            className="input-field w-full sm:w-auto min-w-0 appearance-none"
+                            style={{ WebkitAppearance: 'none' }}
                             value={goalData.target_date} 
                             onChange={(e) => {
                                 setGoalData({ ...goalData, target_date: e.target.value });

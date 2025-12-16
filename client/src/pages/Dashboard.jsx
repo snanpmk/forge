@@ -51,7 +51,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               
               {/* Prayers Prayed */}
-              <Link to="/prayers" className="card p-5 flex flex-col justify-between hover:scale-[1.02] transition-transform relative overflow-hidden group cursor-pointer">
+              <Link to="/prayer" className="card p-5 flex flex-col justify-between hover:scale-[1.02] transition-transform relative overflow-hidden group cursor-pointer">
                   <div className="absolute top-0 right-0 w-24 h-24 bg-wellness-blue/10 rounded-full blur-2xl -mr-6 -mt-6" />
                   <div className="flex justify-between items-start mb-2">
                       <span className="text-xs font-bold uppercase tracking-wider text-muted">Prayers Prayed</span>

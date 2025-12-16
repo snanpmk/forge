@@ -1,10 +1,10 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
 import Modal from '../components/ui/Modal';
 import TaskForm from '../components/TaskForm';
 import { Trash2,Clock, Plus, Calendar, CheckCircle2, AlertCircle, RefreshCw, Filter, ArrowUpDown, Pencil, Zap } from 'lucide-react';
-import { format, isToday, isTomorrow, isPast, parseISO, addDays, startOfToday, isValid } from 'date-fns';
+import { format, isToday, isTomorrow, isPast, parseISO } from 'date-fns';
 import { confirmAction } from '../components/ui/ConfirmationToast';
 import clsx from 'clsx';
 import Button from '../components/ui/Button';

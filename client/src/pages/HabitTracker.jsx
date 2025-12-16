@@ -121,7 +121,7 @@ export default function HabitTracker() {
       queryClient.setQueryData(['habits'], (old) => {
         return old.map((habit) => {
           if (habit._id === id) {
-            const dateStr = format(date, 'yyyy-MM-dd');
+
             const existingLogIndex = habit.logs.findIndex((log) => 
                isSameDay(new Date(log.date), date)
             );

@@ -73,7 +73,7 @@ export default function Finance() {
     queryFn: async () => (await api.get('/finance')).data,
   });
 
-  const { data: budgets, isLoading: loadingBudgets } = useQuery({
+  const { data: budgets } = useQuery({
     queryKey: ['budget', currentMonth],
     queryFn: async () => (await api.get(`/budget?month=${currentMonth}`)).data,
   });
