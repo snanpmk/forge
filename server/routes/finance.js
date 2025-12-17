@@ -25,6 +25,20 @@ router.post('/', async (req, res) => {
   }
 });
 
+// PUT update transaction
+router.put('/:id', async (req, res) => {
+    try {
+        const updatedTransaction = await Finance.findOneAndUpdate(
+            { _id: req.params.id, user: req.query.userId || req.user.id },
+            { $set: req.body },
+            { new: true }
+        );
+        res.json(updatedTransaction);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+});
+
 // DELETE transaction
 router.delete('/:id', async (req, res) => {
   try {

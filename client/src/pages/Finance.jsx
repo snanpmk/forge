@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
 import { DollarSign, TrendingUp, TrendingDown, Trash2, ArrowRightLeft, Briefcase, HandCoins, IndianRupee, Filter, PieChart } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, isToday, isYesterday, parseISO } from 'date-fns';
 import clsx from 'clsx';
 import Button from '../components/ui/Button';
 import toast from 'react-hot-toast';
@@ -59,6 +59,10 @@ export default function Finance() {
     related_entity: '' // For loans/debts
   });
 
+  const [isSplit, setIsSplit] = useState(false);
+  const [myShare, setMyShare] = useState('');
+  const [splitEntity, setSplitEntity] = useState('');
+
   // Budget Form State
   const [budgetForm, setBudgetForm] = useState({
     category: EXPENSE_CATEGORIES[0],
@@ -99,6 +103,15 @@ export default function Finance() {
     },
   });
 
+  const updateTransactionMutation = useMutation({
+    mutationFn: async ({ id, data }) => api.put(`/finance/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['finance']);
+      queryClient.invalidateQueries(['dashboard']);
+      toast.success('Transaction updated');
+    },
+  });
+
   const deleteTransactionMutation = useMutation({
     mutationFn: async (id) => api.delete(`/finance/${id}`),
     onSuccess: () => {
@@ -121,7 +134,46 @@ export default function Finance() {
   const handleSubmitTransaction = (e) => {
     e.preventDefault();
     if (!formData.amount || !formData.category) return;
-    addTransactionMutation.mutate({ ...formData, amount: Number(formData.amount) });
+
+    if (isSplit && formData.type === 'expense' && myShare) {
+        const totalAmount = Number(formData.amount);
+        const myShareAmount = Number(myShare);
+        const lendedAmount = totalAmount - myShareAmount;
+
+        if (lendedAmount <= 0) {
+            toast.error("My Share cannot be greater than or equal to Total Amount");
+            return;
+        }
+
+        if (!splitEntity) {
+            toast.error("Please specify who you are splitting with");
+            return;
+        }
+
+        // 1. My Expense
+        addTransactionMutation.mutate({
+            ...formData,
+            amount: myShareAmount,
+            description: `${formData.description} (My Share)`.trim()
+        });
+
+        // 2. Lended Amount
+        addTransactionMutation.mutate({
+            type: 'lended',
+            amount: lendedAmount,
+            category: 'Split Bill',
+            related_entity: splitEntity,
+            description: `Split bill from total: ₹${totalAmount}`
+        });
+        
+        // Reset extra fields
+        setIsSplit(false);
+        setMyShare('');
+        setSplitEntity('');
+
+    } else {
+        addTransactionMutation.mutate({ ...formData, amount: Number(formData.amount) });
+    }
   };
 
   const handleSubmitBudget = (e) => {
@@ -138,6 +190,25 @@ export default function Finance() {
         case 'invested': return 'Invested In (e.g. Stocks, Crypto)';
         default: return null;
     }
+  };
+
+  // Helper: Group Transactions by Date
+  const groupTransactionsByDate = (txns) => {
+      if (!txns) return {};
+      return txns.reduce((acc, t) => {
+          const date = t.date.split('T')[0];
+          if (!acc[date]) acc[date] = [];
+          acc[date].push(t);
+          return acc;
+      }, {});
+  };
+
+  // Date Editing Logic
+  const [editingDateId, setEditingDateId] = useState(null);
+  const handleDateChange = (id, newDate) => {
+      if (!newDate) return;
+      updateTransactionMutation.mutate({ id, data: { date: new Date(newDate) } });
+      setEditingDateId(null);
   };
 
   // Calculations
@@ -252,7 +323,6 @@ export default function Finance() {
                   ))}
                 </div>
                 
-                {/* Amount */}
                 <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₹</span>
                     <input
@@ -263,6 +333,49 @@ export default function Finance() {
                         onChange={e => setFormData({...formData, amount: e.target.value})}
                     />
                 </div>
+
+                {/* Split Bill Toggle & Fields */}
+                {formData.type === 'expense' && (
+                    <div className="bg-orange-50/50 p-3 rounded-xl border border-orange-100 space-y-3">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <input 
+                                type="checkbox" 
+                                checked={isSplit}
+                                onChange={e => setIsSplit(e.target.checked)}
+                                className="w-4 h-4 text-orange-500 rounded focus:ring-orange-500 border-gray-300"
+                            />
+                            <span className="text-sm font-bold text-gray-700">Split this bill?</span>
+                        </label>
+                        
+                        {isSplit && (
+                            <div className="grid grid-cols-2 gap-3 animate-fade-in text-sm">
+                                <div>
+                                    <label className="text-xs font-bold text-gray-500 mb-1 block">My Share</label>
+                                    <input 
+                                        type="number"
+                                        placeholder="0"
+                                        className="input-field py-2"
+                                        value={myShare}
+                                        onChange={e => setMyShare(e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-gray-500 mb-1 block">Split With</label>
+                                    <input 
+                                        type="text"
+                                        placeholder="Group / Name"
+                                        className="input-field py-2"
+                                        value={splitEntity}
+                                        onChange={e => setSplitEntity(e.target.value)}
+                                    />
+                                </div>
+                                <div className="col-span-2 text-xs text-orange-600 font-medium bg-orange-100/50 p-2 rounded-lg">
+                                    You pay: <b>₹{Number(myShare || 0)}</b> • Lended: <b>₹{Number(formData.amount || 0) - Number(myShare || 0)}</b>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
                 
                 {/* Dynamic Entity Field for Loan/Invest */}
                 {getEntityPlaceholder(formData.type) && (
@@ -377,7 +490,7 @@ export default function Finance() {
                 </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-6 lg:max-h-[800px] lg:overflow-y-auto lg:pr-2 custom-scrollbar">
               {filteredTransactions.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-20 text-center opacity-50">
                       <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
@@ -386,57 +499,93 @@ export default function Finance() {
                       <p className="text-gray-500 font-medium">No transactions found.</p>
                   </div>
               ) : (
-                filteredTransactions.map((t, idx) => {
-                  const isPositive = ['income', 'borrowed'].includes(t.type);
-                  return (
-                  <div 
-                    key={t._id} 
-                    className="group bg-white border border-gray-100 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between hover:border-gray-300 hover:shadow-soft transition-all animate-slide-up gap-3 sm:gap-4"
-                    style={{ animationDelay: `${idx * 50}ms` }}
-                  >
-                    <div className="flex items-center gap-4 w-full sm:w-auto">
-                      <div className={clsx(
-                        "w-12 h-12 rounded-2xl flex items-center justify-center transition-colors flex-shrink-0",
-                        isPositive ? "bg-green-50 text-green-600 group-hover:bg-green-100" : "bg-red-50 text-red-600 group-hover:bg-red-100"
-                      )}>
-                        {isPositive ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-bold text-gray-900 truncate">{t.category}</span>
-                          <span className={clsx(
-                              "text-[10px] px-2 py-0.5 rounded-md uppercase tracking-wide font-bold flex-shrink-0",
-                              isPositive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                          )}>
-                            {t.type}
-                          </span>
-                        </div>
-                        {/* Details Row */}
-                        <div className="text-xs text-gray-500 mt-1 flex items-center gap-2">
-                            <span className="font-mono flex-shrink-0">{format(new Date(t.date), 'MMM d')}</span>
-                            {(t.related_entity || t.description) && <span className="w-1 h-1 rounded-full bg-gray-300 flex-shrink-0" />}
-                            <span className="truncate max-w-[150px] sm:max-w-[300px]">
-                                {t.related_entity && <span className="font-bold text-gray-700 mr-1">{t.related_entity}</span>}
-                                {t.description}
-                            </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto border-t sm:border-none pt-2 sm:pt-0 border-gray-50">
-                      <span className={clsx("font-mono font-bold whitespace-nowrap text-base sm:text-lg", isPositive ? "text-green-600" : "text-gray-900")}>
-                        {isPositive ? '+' : '-'}₹{t.amount.toLocaleString('en-IN')}
-                      </span>
-                      <button 
-                        onClick={() => confirmAction('Delete this transaction?', () => deleteTransactionMutation.mutate(t._id))}
-                        disabled={deleteTransactionMutation.isLoading || deleteTransactionMutation.isPending}
-                        className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 p-2 text-gray-300 hover:text-red-500 transition-all hover:bg-red-50 rounded-lg transform active:scale-95 disabled:opacity-50"
-                        title="Delete"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </div>
-                )})
+                Object.entries(groupTransactionsByDate(filteredTransactions))
+                    .sort((a, b) => new Date(b[0]) - new Date(a[0])) // Sort by date desc
+                    .map(([date, dayTransactions]) => {
+                        let dateLabel = format(parseISO(date), 'MMMM d, yyyy');
+                        if (isToday(parseISO(date))) dateLabel = 'Today';
+                        else if (isYesterday(parseISO(date))) dateLabel = 'Yesterday';
+
+                        return (
+                            <div key={date} className="space-y-3">
+                                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">{dateLabel}</h3>
+                                {dayTransactions.map((t, idx) => {
+                                  const isPositive = ['income', 'borrowed'].includes(t.type);
+                                  return (
+                                  <div 
+                                    key={t._id} 
+                                    className="group bg-white border border-gray-100 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between hover:border-gray-300 hover:shadow-soft transition-all animate-slide-up gap-3 sm:gap-4"
+                                    style={{ animationDelay: `${idx * 50}ms` }}
+                                  >
+                                    <div className="flex items-center gap-4 w-full sm:w-auto">
+                                      <div className={clsx(
+                                        "w-10 h-10 rounded-xl flex items-center justify-center transition-colors flex-shrink-0",
+                                        isPositive ? "bg-green-50 text-green-600 group-hover:bg-green-100" : "bg-red-50 text-red-600 group-hover:bg-red-100"
+                                      )}>
+                                        {isPositive ? <TrendingUp size={18} /> : <TrendingDown size={18} />}
+                                      </div>
+                                      <div className="min-w-0 flex-1">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                          <span className="font-bold text-gray-900 truncate">{t.category}</span>
+                                          <span className={clsx(
+                                              "text-[10px] px-2 py-0.5 rounded-md uppercase tracking-wide font-bold flex-shrink-0",
+                                              isPositive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                                          )}>
+                                            {t.type}
+                                          </span>
+                                        </div>
+                                        {/* Details Row */}
+                                        <div className="text-xs text-gray-500 mt-1 flex items-center gap-2">
+                                            {/* Editable Date */}
+                                            {editingDateId === t._id ? (
+                                                <input 
+                                                    type="date"
+                                                    className="bg-gray-100 rounded px-1 py-0.5"
+                                                    autoFocus
+                                                    // Initialize with current date but allow change
+                                                    defaultValue={t.date ? t.date.split('T')[0] : ''}
+                                                    onBlur={(e) => handleDateChange(t._id, e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') handleDateChange(t._id, e.currentTarget.value);
+                                                    }}
+                                                />
+                                            ) : (
+                                                <span 
+                                                    className="font-mono flex-shrink-0 cursor-pointer hover:text-black hover:underline decoration-dotted"
+                                                    title="Click to change date"
+                                                    onClick={() => setEditingDateId(t._id)}
+                                                >
+                                                    {format(new Date(t.date), 'MMM d, h:mm a')}
+                                                </span>
+                                            )}
+                                            
+                                            {(t.related_entity || t.description) && <span className="w-1 h-1 rounded-full bg-gray-300 flex-shrink-0" />}
+                                            <span className="truncate max-w-[150px] sm:max-w-[300px]">
+                                                {t.related_entity && <span className="font-bold text-gray-700 mr-1">{t.related_entity}</span>}
+                                                {t.description}
+                                            </span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto border-t sm:border-none pt-2 sm:pt-0 border-gray-50">
+                                      <span className={clsx("font-mono font-bold whitespace-nowrap text-base sm:text-lg", isPositive ? "text-green-600" : "text-gray-900")}>
+                                        {isPositive ? '+' : '-'}₹{t.amount.toLocaleString('en-IN')}
+                                      </span>
+                                      <button 
+                                        onClick={() => confirmAction('Delete this transaction?', () => deleteTransactionMutation.mutate(t._id))}
+                                        disabled={deleteTransactionMutation.isLoading || deleteTransactionMutation.isPending}
+                                        className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 p-2 text-gray-300 hover:text-red-500 transition-all hover:bg-red-50 rounded-lg transform active:scale-95 disabled:opacity-50"
+                                        title="Delete"
+                                      >
+                                        <Trash2 size={16} />
+                                      </button>
+                                    </div>
+                                  </div>
+                                  )})
+                                }
+                            </div>
+                        );
+                    })
               )}
             </div>
           </div>
